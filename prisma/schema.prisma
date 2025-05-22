@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// Người dùng Telegram
+model User {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId     Int           @unique // Telegram user.id
+  username       String?
+  firstName      String?
+  language       String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  wallets        Wallet[]
+  transactions   Transaction[]
+  priceAlerts    PriceAlert[]
+  activityPoints Int           @default(0) // Gamification points
+}
+
+// Ví của người dùng
+model Wallet {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  address        String
+  name           String?
+  type           String    // "ETH", "BSC", "TON", etc.
+  isDefault      Boolean   @default(false)
+  userId         String    @db.ObjectId
+  user           User      @relation(fields: [userId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, address])
+}
+
+// Token được hỗ trợ
+model Token {
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  symbol           String        @unique
+  name             String
+  icon             String?
+  contractAddress  String?
+  decimals         Int           @default(18)
+  network          String    // "ETH", "BSC", "TON", etc.
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  fromTransactions Transaction[] @relation("fromToken")
+  toTransactions   Transaction[] @relation("toToken")
+  priceAlerts      PriceAlert[]
+}
+
+// Giao dịch swap
+model Transaction {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String    @db.ObjectId
+  user           User      @relation(fields: [userId], references: [id])
+  fromTokenId    String    @db.ObjectId
+  fromToken      Token     @relation("fromToken", fields: [fromTokenId], references: [id])
+  toTokenId      String    @db.ObjectId
+  toToken        Token     @relation("toToken", fields: [toTokenId], references: [id])
+  fromAmount     String    // Use String for big numbers
+  toAmount       String    // Use String for big numbers
+  rate           Float
+  status         String    // "PENDING", "SUCCESS", "FAILED"
+  txHash         String?   // Blockchain transaction hash
+  walletAddress  String    // From which wallet address
+  slippage       Float?
+  gasFee         String?   // Gas fee in native token
+  isSimulated    Boolean   @default(true) // True for simulated, False for real
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// Cảnh báo giá token
+model PriceAlert {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String    @db.ObjectId
+  user           User      @relation(fields: [userId], references: [id])
+  tokenId        String    @db.ObjectId
+  token          Token     @relation(fields: [tokenId], references: [id])
+  targetPrice    Float
+  condition      String    // "ABOVE", "BELOW"
+  isTriggered    Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// Thông báo đã gửi
+model Notification {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId     Int
+  message        String
+  type           String    // "TRANSACTION", "PRICE_ALERT", "REMINDER", "BROADCAST"
+  referenceId    String?   @db.ObjectId  // ID của transaction hoặc price alert
+  isDelivered    Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+}
+
+// Cấu hình admin
+model AdminConfig {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  key            String    @unique
+  value          String
+  updatedAt      DateTime  @updatedAt
+}
