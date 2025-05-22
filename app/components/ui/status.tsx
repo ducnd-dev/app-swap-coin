@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 interface ErrorDisplayProps {
   error?: string | null;
   retry?: () => void;

@@ -1,24 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/app/lib/api/auth';
 import { prisma } from '@/app/lib/utils/prisma';
-import { getTokenPrice, getMultipleTokenPrices } from '@/app/lib/api/prices';
+import { getMultipleTokenPrices } from '@/app/lib/api/prices';
 
 /**
  * GET /api/tokens
  * Fetches all supported tokens with optional filters
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  try {
-    // Authentication optional - public endpoint
-    const user = await authenticateRequest(req);
+  try {    // Authentication optional - public endpoint
+    // We're not using the user object, but we still authenticate the request
+    await authenticateRequest(req);
     
     // Parse query parameters
     const url = new URL(req.url);
     const network = url.searchParams.get('network');
     const active = url.searchParams.get('active');
+      // Build filters
+    interface TokenFilters {
+      network?: string;
+      isActive?: boolean;
+    }
     
-    // Build filters
-    const filters: any = {};
+    const filters: TokenFilters = {};
     
     if (network) {
       filters.network = network;
@@ -40,15 +44,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     
     // If user is authenticated and tokens are fetched, add price data
     if (tokens.length > 0) {
-      try {
-        // Get all token symbols
-        const symbols = tokens.map(token => token.symbol);
+      try {        // Get all token symbols
+        const symbols = tokens.map((token: { symbol: string }) => token.symbol);
         
         // Fetch prices for all tokens
         const prices = await getMultipleTokenPrices(symbols);
         
         // Add price data to tokens
-        const tokensWithPrices = tokens.map(token => ({
+        const tokensWithPrices = tokens.map((token: { symbol: string, [key: string]: unknown }) => ({
           ...token,
           currentPrice: prices[token.symbol] || null,
         }));

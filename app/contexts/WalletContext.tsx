@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 
 export interface Wallet {
@@ -82,9 +82,10 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         return true;
       }
       return false;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding wallet:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to add wallet';
+      const axiosError = error as AxiosError<{error?: string}>;
+      const errorMessage = axiosError?.response?.data?.error || 'Failed to add wallet';
       setError(errorMessage);
       toast.error(errorMessage);
       return false;

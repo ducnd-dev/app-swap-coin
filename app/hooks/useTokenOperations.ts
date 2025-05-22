@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import axios from 'axios';
 import { Token } from '@/app/contexts/TokenContext';
 
@@ -97,16 +97,24 @@ export const useTokenOperations = () => {
         priceImpact: response.data.priceImpact,
         gasFee: response.data.gasFee,
         error: null
-      };
-    } catch (error: any) {
+      };    } catch (error: unknown) {
       console.error('Error getting swap quote:', error);
+      let errorMessage = 'Failed to get swap quote';
+      
+      if (error && typeof error === 'object' && 'response' in error && 
+          error.response && typeof error.response === 'object' && 
+          'data' in error.response && error.response.data && 
+          typeof error.response.data === 'object' && 'error' in error.response.data) {
+        errorMessage = error.response.data.error as string;
+      }
+      
       return {
         fromAmount: '',
         toAmount: '',
         rate: 0,
         priceImpact: 0,
         gasFee: '0',
-        error: error.response?.data?.error || 'Failed to get swap quote'
+        error: errorMessage
       };
     }
   }, []);

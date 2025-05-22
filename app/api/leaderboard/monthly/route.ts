@@ -89,9 +89,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         },
       },
     });
-    
     // Format the response
-    const leaderboard = users.map((user, index) => ({
+    const leaderboard = users.map((user: { 
+      id: string;
+      telegramId: number;
+      username: string | null;
+      firstName: string | null;
+      activityPoints: number;
+      _count: { transactions: number }
+    }, index: number) => ({
       rank: index + 1,
       userId: user.id,
       telegramId: user.telegramId,

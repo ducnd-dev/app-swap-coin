@@ -56,8 +56,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       pendingTransactions: 0,
       failedTransactions: 0,
     };
-    
-    userStats.forEach(stat => {
+      userStats.forEach((stat) => {
       stats.totalTransactions += stat._count;
       
       switch (stat.status) {

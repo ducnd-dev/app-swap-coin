@@ -1,11 +1,32 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/app/generated/prisma/client';
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+// Add a proper declaration for the global object
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
+}
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+// Create a single instance of Prisma Client
+let prisma: PrismaClient;
+
+// This logic ensures we don't create multiple instances in development
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient();
+} else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient({
+      log: ['query', 'info', 'warn', 'error'],
+    });
+  }
+  prisma = global.prisma;
+}
+
+// Export the Prisma client
+export { prisma };
+
+// Ensure Prisma disconnects on process exit
+if (process.env.NODE_ENV !== 'production') {
+  process.on('beforeExit', async () => {
+    await prisma.$disconnect();
   });
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+}

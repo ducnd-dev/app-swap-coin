@@ -9,7 +9,7 @@ import { getTokenPrice } from '@/app/lib/api/prices';
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     // Authentication required
@@ -18,7 +18,7 @@ export async function PUT(
       return unauthorizedResponse();
     }
     
-    const { id } = params;
+    const { id } = await params;
     
     // Find price alert and check if it belongs to the user
     const existingAlert = await prisma.priceAlert.findUnique({
@@ -37,13 +37,19 @@ export async function PUT(
         { status: 404 }
       );
     }
-    
-    // Get request body
+      // Get request body
     const body = await req.json();
     const { targetPrice, condition, isActive } = body;
+      // Prepare update data
+    interface AlertUpdateData {
+      targetPrice?: number;
+      condition?: 'ABOVE' | 'BELOW';
+      isActive?: boolean;
+      isTriggered?: boolean;
+      triggeredAt?: Date;
+    }
     
-    // Prepare update data
-    const updateData: any = {};
+    const updateData: AlertUpdateData = {};
     
     if (targetPrice !== undefined) {
       updateData.targetPrice = parseFloat(targetPrice.toString());
@@ -117,7 +123,7 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     // Authentication required
@@ -126,7 +132,7 @@ export async function DELETE(
       return unauthorizedResponse();
     }
     
-    const { id } = params;
+    const { id } =  await params;
     
     // Find price alert and check if it belongs to the user
     const existingAlert = await prisma.priceAlert.findUnique({

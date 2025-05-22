@@ -30,7 +30,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const telegramId = url.searchParams.get('telegramId');
     
     // Build filters
-    const filters: any = {};
+    const filters: Record<string, unknown> = {};
     
     if (status) {
       filters.status = status.toUpperCase();

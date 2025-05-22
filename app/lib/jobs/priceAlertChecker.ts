@@ -1,13 +1,10 @@
-import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
+import { prisma } from '../utils/prisma';
 
 interface TelegramConfig {
   botToken: string;
   apiUrl: string;
 }
-
-// Initialize Prisma client
-const prisma = new PrismaClient();
 
 // Telegram configuration
 const telegramConfig: TelegramConfig = {
@@ -37,22 +34,39 @@ export async function checkPriceAlerts() {
       return;
     }
 
-    console.log(`Checking ${alerts.length} price alerts`);
-
-    // Group alerts by token to minimize API calls
-    const tokenAlerts = alerts.reduce((acc, alert) => {
+    console.log(`Checking ${alerts.length} price alerts`);    // Group alerts by token to minimize API calls
+    interface AlertType {
+      id: string;
+      tokenId: string;
+      condition: 'ABOVE' | 'BELOW';
+      targetPrice: number;
+      user: {
+        telegramId: number;
+      };
+      token: {
+        symbol: string;
+        contractAddress: string;
+        network: string;
+      };
+      [key: string]: unknown;
+    }
+      const tokenAlerts = alerts.reduce<Record<string, AlertType[]>>((acc, alert) => {
       const tokenId = alert.tokenId;
       if (!acc[tokenId]) {
         acc[tokenId] = [];
       }
-      acc[tokenId].push(alert);
+      acc[tokenId].push(alert as unknown as AlertType);
       return acc;
-    }, {} as Record<string, any[]>);
+    }, {});
 
     // Process each token's alerts
     for (const tokenId of Object.keys(tokenAlerts)) {
       // Get current price from API
       const token = tokenAlerts[tokenId][0].token;
+      if (!token.contractAddress || !token.network) {
+        console.error(`Missing contract address or network for token ${token.symbol}`);
+        continue;
+      }
       const currentPrice = await getTokenPrice(token.contractAddress, token.network);
       
       if (currentPrice === null) {
@@ -71,8 +85,7 @@ export async function checkPriceAlerts() {
           await prisma.priceAlert.update({
             where: { id: alert.id },
             data: { 
-              isTriggered: true,
-              triggeredAt: new Date()
+              isTriggered: true
             }
           });
 

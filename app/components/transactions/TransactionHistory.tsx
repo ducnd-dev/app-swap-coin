@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { RefreshCw, ExternalLink } from 'lucide-react';
-import { useTransactions, Transaction } from '@/app/hooks/useTransactions';
+import { useTransactions } from '@/app/hooks/useTransactions';
 
 export default function TransactionHistory() {
   const [filter, setFilter] = useState<'all' | 'real' | 'simulated'>('all');

@@ -82,10 +82,17 @@ export const usePriceAlerts = (options: UsePriceAlertsOptions = {}) => {
       
       toast.success('Price alert added successfully');
       fetchAlerts();
-      return true;
-    } catch (error: any) {
+      return true;    } catch (error: unknown) {
       console.error('Error adding price alert:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to add price alert';
+      let errorMessage = 'Failed to add price alert';
+      
+      if (error && typeof error === 'object' && 'response' in error && 
+          error.response && typeof error.response === 'object' && 
+          'data' in error.response && error.response.data && 
+          typeof error.response.data === 'object' && 'error' in error.response.data) {
+        errorMessage = error.response.data.error as string;
+      }
+        
       setError(errorMessage);
       toast.error(errorMessage);
       return false;

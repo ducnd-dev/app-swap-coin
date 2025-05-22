@@ -99,7 +99,7 @@ export async function simulateSwap(
   fromToken: string,
   toToken: string,
   amount: string,
-  slippage: number = 0.5
+  slippage = 0.5
 ): Promise<{
   fromAmount: string;
   toAmount: string;
@@ -107,6 +107,8 @@ export async function simulateSwap(
   estimatedGas: string;
 }> {
   try {
+    console.log(slippage);
+    
     // In a real implementation, this would call a DEX API or smart contract
     // For this simulation, we'll use a mock implementation
 

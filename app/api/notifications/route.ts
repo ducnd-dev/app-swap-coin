@@ -21,7 +21,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const skip = parseInt(url.searchParams.get('skip') || '0', 10);
     
     // Build filters
-    const filters: any = {
+    const filters: Record<string, unknown> = {
       telegramId: user.telegramId,
     };
     

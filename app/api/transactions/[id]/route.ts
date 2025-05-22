@@ -8,7 +8,7 @@ import { prisma } from '@/app/lib/utils/prisma';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+{params}: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     // Authentication required
@@ -17,7 +17,7 @@ export async function GET(
       return unauthorizedResponse();
     }
     
-    const { id } = params;
+    const { id } = await params;
     
     // Fetch transaction
     const transaction = await prisma.transaction.findUnique({

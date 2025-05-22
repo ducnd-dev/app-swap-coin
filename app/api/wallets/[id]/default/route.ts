@@ -8,7 +8,7 @@ import { prisma } from '@/app/lib/utils/prisma';
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     // Authenticate request
@@ -17,7 +17,7 @@ export async function PUT(
       return unauthorizedResponse();
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if wallet exists and belongs to the user
     const wallet = await prisma.wallet.findUnique({

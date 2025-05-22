@@ -19,9 +19,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const url = new URL(req.url);
     const active = url.searchParams.get('active');
     const triggered = url.searchParams.get('triggered');
+      // Build filters
+    interface AlertFilters {
+      userId: string;
+      isActive?: boolean;
+      isTriggered?: boolean;
+    }
     
-    // Build filters
-    const filters: any = {
+    const filters: AlertFilters = {
       userId: user.id,
     };
     
@@ -54,10 +59,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         createdAt: 'desc',
       },
     });
-    
-    // Get current prices for each alert
+      // Get current prices for each alert
     const alertsWithCurrentPrices = await Promise.all(
-      alerts.map(async (alert) => {
+      alerts.map(async (alert: {
+        id: string;
+        token: { symbol: string };
+        [key: string]: unknown;
+      }) => {
         try {
           const currentPrice = await getTokenPrice(alert.token.symbol);
           return {

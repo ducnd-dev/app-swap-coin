@@ -38,10 +38,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       PENDING: 0,
       FAILED: 0,
     };
-    
-    transactionStats.forEach(stat => {
+      transactionStats.forEach((stat) => {
       if (stat.status === 'SUCCESS' || stat.status === 'PENDING' || stat.status === 'FAILED') {
-        transactionByStatus[stat.status] = stat._count;
+        transactionByStatus[stat.status as keyof typeof transactionByStatus] = stat._count;
       }
     });
     
@@ -93,9 +92,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       },
       take: 5,
     });
-    
-    // Get token details
-    const tokenIds = topFromTokens.map(t => t.fromTokenId);
+      // Get token details
+    const tokenIds = topFromTokens.map((t: { fromTokenId: string }) => t.fromTokenId);
     const tokenDetails = await prisma.token.findMany({
       where: {
         id: {
@@ -103,10 +101,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         },
       },
     });
-    
-    // Create top tokens response
-    const topTokens = topFromTokens.map(t => {
-      const token = tokenDetails.find(td => td.id === t.fromTokenId);
+      // Create top tokens response
+    const topTokens = topFromTokens.map((t: { fromTokenId: string, _count: number }) => {
+      const token = tokenDetails.find((td: { id: string }) => td.id === t.fromTokenId);
       return {
         tokenId: t.fromTokenId,
         symbol: token?.symbol || 'Unknown',

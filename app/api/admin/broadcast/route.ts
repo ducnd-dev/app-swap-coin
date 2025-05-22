@@ -45,7 +45,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             telegramId: true,
           },
         });
-        telegramIds = allUsers.map(u => u.telegramId);
+        telegramIds = allUsers.map((u: { telegramId: number }) => u.telegramId);
         break;
       case 'active':
         // Send to users who have transactions in the last 30 days
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             telegramId: true,
           },
         });
-        telegramIds = activeUsers.map(u => u.telegramId);
+        telegramIds = activeUsers.map((u: { telegramId: number }) => u.telegramId);
         break;
       case 'inactive':
         // Send to users without transactions in the last 30 days
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             telegramId: true,
           },
         });
-        telegramIds = inactiveUsers.map(u => u.telegramId);
+        telegramIds = inactiveUsers.map((u: { telegramId: number }) => u.telegramId);
         break;
       case 'custom':
         // Send to specific user IDs

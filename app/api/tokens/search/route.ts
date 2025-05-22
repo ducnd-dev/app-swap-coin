@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/app/lib/api/auth';
-import { prisma } from '@/app/lib/utils/prisma';
-import { getTokenPrice } from '@/app/lib/api/prices';
+import { prisma, initializePrisma } from '@/app/lib/utils/server';
 
 /**
  * GET /api/tokens/search
@@ -9,6 +8,9 @@ import { getTokenPrice } from '@/app/lib/api/prices';
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
+    // Initialize Prisma before use
+    await initializePrisma();
+    
     // Authentication optional - public endpoint
     await authenticateRequest(req);
     

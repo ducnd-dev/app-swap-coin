@@ -86,7 +86,7 @@ export const useTransactions = (options: UseTransactionsOptions = {}) => {
   // Initial fetch
   useEffect(() => {
     fetchTransactions(1, true);
-  }, [filter]);
+  }, [filter, fetchTransactions]);
 
   // Set up refresh interval if provided
   useEffect(() => {

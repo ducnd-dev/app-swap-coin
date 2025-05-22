@@ -52,7 +52,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         // For now, we'll just count the number of transactions as a proxy
       },
     });
-
+    console.log('totalVolume', totalVolume);
+    
     return NextResponse.json({
       user: {
         id: userData.id,
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         activityPoints: userData.activityPoints,
         createdAt: userData.createdAt,
       },
-      wallets: userData.wallets.map(wallet => ({
+      wallets: userData.wallets.map((wallet) => ({
         id: wallet.id,
         address: wallet.address,
         name: wallet.name,

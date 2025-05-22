@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateTelegramWebAppData, extractTelegramUserData } from '@/app/lib/telegram/auth';
-import { prisma } from '@/app/lib/utils/prisma';
+import { prisma, initializePrisma } from '@/app/lib/utils/server';
 
 /**
  * POST /api/auth/telegram
@@ -8,6 +8,9 @@ import { prisma } from '@/app/lib/utils/prisma';
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    // Initialize Prisma before use
+    await initializePrisma();
+    
     // Get init data from request
     const body = await req.json();
     const { initData } = body;

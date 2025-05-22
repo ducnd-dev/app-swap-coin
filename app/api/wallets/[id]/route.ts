@@ -8,7 +8,7 @@ import { prisma } from '@/app/lib/utils/prisma';
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     // Authenticate request
@@ -17,7 +17,7 @@ export async function PUT(
       return unauthorizedResponse();
     }
 
-    const { id } = params;
+    const { id } = await params;
     
     // Get wallet data from request
     const body = await req.json();
@@ -65,7 +65,7 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     // Authenticate request
@@ -74,7 +74,7 @@ export async function DELETE(
       return unauthorizedResponse();
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if wallet exists and belongs to the user
     const existingWallet = await prisma.wallet.findUnique({

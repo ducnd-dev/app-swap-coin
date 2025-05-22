@@ -28,7 +28,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const search = url.searchParams.get('search');
     
     // Build filters
-    const filters: any = {};
+    const filters: Record<string, unknown> = {};
     
     if (search) {
       filters.OR = [
@@ -75,9 +75,22 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const totalCount = await prisma.user.count({
       where: filters,
     });
-    
-    return NextResponse.json({
-      users: users.map(user => ({
+      return NextResponse.json({
+      users: users.map((user: { 
+        id: string;
+        telegramId: number;
+        username: string | null;
+        firstName: string | null;
+        language: string | null;
+        activityPoints: number;
+        createdAt: Date;
+        updatedAt: Date;
+        _count: {
+          wallets: number;
+          transactions: number;
+          priceAlerts: number;
+        }
+      }) => ({
         id: user.id,
         telegramId: user.telegramId,
         username: user.username,

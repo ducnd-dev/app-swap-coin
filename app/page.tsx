@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Image from "next/image";
@@ -9,29 +9,11 @@ import { Toaster, toast } from 'react-hot-toast';
 export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
+console.log('User:', user);
 
-  // Initialize Telegram WebApp
-  useEffect(() => {
-    // Check if running in Telegram WebApp environment
-    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp;
-      
-      // Initialize Telegram WebApp
-      tg.expand();
-      tg.ready();
-      
-      // Authenticate the user
-      authenticateUser(tg.initData);
-    } else {
-      // Not running in Telegram WebApp
-      setIsLoading(false);
-      toast.error('This app must be opened from Telegram');
-    }
-  }, []);
-  
-  // Authenticate user with the server
-  const authenticateUser = async (initData: string) => {
+  // Authenticate user with the server (wrapped in useCallback)
+  const authenticateUser = useCallback(async (initData: string) => {
     try {
       setIsLoading(true);
       const response = await axios.post('/api/auth/telegram', { initData });
@@ -55,8 +37,27 @@ export default function Home() {
       toast.error('Failed to authenticate with Telegram');
       setIsLoading(false);
     }
-  };
+  }, [router]);
 
+  // Initialize Telegram WebApp
+  useEffect(() => {
+    // Check if running in Telegram WebApp environment
+    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      
+      // Initialize Telegram WebApp
+      tg.expand();
+      tg.ready();
+      
+      // Authenticate the user
+      authenticateUser(tg.initData);
+    } else {
+      // Not running in Telegram WebApp
+      setIsLoading(false);
+      toast.error('This app must be opened from Telegram');
+    }
+  }, [authenticateUser]);
+  
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <Toaster position="top-center" />
@@ -115,8 +116,8 @@ declare global {
           isActive: boolean;
           show: () => void;
           hide: () => void;
-          onClick: (callback: Function) => void;
-          offClick: (callback: Function) => void;
+          onClick: (callback: () => void) => void;
+          offClick: (callback: () => void) => void;
         };
       };
     };

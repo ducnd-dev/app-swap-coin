@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -42,41 +42,6 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch tokens on initial load
-  useEffect(() => {
-    fetchTokens();
-  }, []);
-
-  // Function to fetch supported tokens
-  const fetchTokens = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await axios.get('/api/tokens/search');
-      const fetchedTokens = response.data.tokens;
-      setTokens(fetchedTokens);
-      
-      // Set popular tokens (typically top market cap or most traded)
-      const popular = fetchedTokens.filter((t: Token) => 
-        ['BTC', 'ETH', 'USDT', 'BNB', 'USDC'].includes(t.symbol)
-      );
-      setPopularTokens(popular);
-      
-      // Fetch prices for popular tokens
-      for (const token of popular) {
-        fetchTokenPrice(token.id);
-      }
-
-    } catch (error) {
-      console.error('Error fetching tokens:', error);
-      setError('Failed to load supported tokens');
-      toast.error('Failed to load supported tokens');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Function to fetch price for a specific token
   const fetchTokenPrice = async (tokenId: string): Promise<number | null> => {
     try {
@@ -103,6 +68,41 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
   };
+
+  // Function to fetch supported tokens (wrapped in useCallback)
+  const fetchTokens = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await axios.get('/api/tokens/search');
+      const fetchedTokens = response.data.tokens;
+      setTokens(fetchedTokens);
+      
+      // Set popular tokens (typically top market cap or most traded)
+      const popular = fetchedTokens.filter((t: Token) => 
+        ['BTC', 'ETH', 'USDT', 'BNB', 'USDC'].includes(t.symbol)
+      );
+      setPopularTokens(popular);
+      
+      // Fetch prices for popular tokens
+      for (const token of popular) {
+        fetchTokenPrice(token.id);
+      }
+
+    } catch (error) {
+      console.error('Error fetching tokens:', error);
+      setError('Failed to load supported tokens');
+      toast.error('Failed to load supported tokens');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);  // Add fetchTokenPrice as a dependency if needed
+
+  // Fetch tokens on initial load
+  useEffect(() => {
+    fetchTokens();
+  }, [fetchTokens]);
 
   // Function to search tokens by name or symbol
   const searchTokens = async (query: string): Promise<Token[]> => {

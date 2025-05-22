@@ -21,9 +21,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const isSimulated = url.searchParams.get('isSimulated');
     const limit = parseInt(url.searchParams.get('limit') || '10', 10);
     const skip = parseInt(url.searchParams.get('skip') || '0', 10);
+      // Build filters
+    interface TransactionFilters {
+      userId: string;
+      status?: string;
+      walletAddress?: string;
+      isSimulated?: boolean;
+    }
     
-    // Build filters
-    const filters: any = {
+    const filters: TransactionFilters = {
       userId: user.id,
     };
     

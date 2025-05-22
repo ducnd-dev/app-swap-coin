@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Check, Wallet } from 'lucide-react';
+import { Plus, Wallet } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
 import { useWallets, Wallet as WalletType } from '@/app/contexts/WalletContext';
