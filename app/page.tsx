@@ -91,19 +91,33 @@ export default function Home() {
   const handleDevLogin = async () => {
     setIsLoading(true);
     try {
+      console.log('Attempting development mode login');
+      
       // Call auth endpoint with mock data
       const response = await axios.post('/api/auth/telegram', { 
         initData: "dev_mode_access",
         devMode: true // Flag to indicate development mode
+      }).catch(err => {
+        console.error('Dev login API error:', {
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data,
+          message: err.message
+        });
+        throw err;
       });
+      
+      console.log('Dev login response:', response.status, response.data);
       
       if (response.data && response.data.sessionToken) {
         localStorage.setItem('sessionToken', response.data.sessionToken);
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.sessionToken}`;
         setUser(response.data.user);
+        
+        toast.success('Logged in as development user');
         router.push('/dashboard');
       } else {
-        throw new Error('Development authentication failed');
+        throw new Error('Development authentication failed - missing session token');
       }
     } catch (error) {
       console.error('Dev auth error:', error);
@@ -165,6 +179,18 @@ export default function Home() {
     console.log('NODE_ENV:', process.env.NODE_ENV);
     console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
 
+    // Set a timeout to ensure we don't get stuck in loading state
+    const loadingTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('Loading timeout reached - switching to development mode');
+        setIsLoading(false);
+        toast('Failed to connect to Telegram, switched to development mode', { 
+          icon: '⚠️',
+          duration: 5000
+        });
+      }
+    }, 5000); // 5 seconds timeout
+
     const initApp = async () => {
       try {
         // Try to load the SDK
@@ -217,7 +243,10 @@ export default function Home() {
     };
 
     initApp();
-  }, [authenticateUser]);
+    
+    // Cleanup the timeout when the component unmounts
+    return () => clearTimeout(loadingTimeout);
+  }, [authenticateUser, isLoading]);
   
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">

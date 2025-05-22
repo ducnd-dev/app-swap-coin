@@ -10,22 +10,24 @@ import { prisma, initializePrisma } from '@/app/lib/utils/server';
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Initialize Prisma before use
-    await initializePrisma();
-      // Get init data from request
+    const dbResult = await initializePrisma().catch(err => {
+      console.error('Prisma initialization error:', err);
+      return { success: false, error: err };
+    });
+    
+    // Get init data from request
     const body = await req.json();
     const { initData, devMode } = body;
-    // if (!initData) {
-    //   return NextResponse.json(
-    //     { error: 'Missing Telegram WebApp initData' }, 
-    //     { status: 400 }
-    //   );
-    // }
+    
+    console.log('Auth request received, data length:', initData?.length || 0);
+    console.log('Development mode:', devMode === true ? 'YES' : 'NO');
 
     // Check if in development mode
-    if (devMode === true || initData === 'dev_mode_access') {
+    if (devMode === true || initData === 'dev_mode_access' || process.env.NODE_ENV === 'development') {
       console.log('Using development mode authentication');
       // Skip validation for development mode
-    } else {      // Validate the data for production
+    } else {
+      // Validate the data for production
       console.log('Validating with bot token:', process.env.TELEGRAM_BOT_TOKEN ? 'Available' : 'Missing');
       const isValid = validateTelegramWebAppData(initData);
       console.log('Validation result:', isValid);
@@ -35,10 +37,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           { status: 401 }
         );
       }
-    }    // Handle user data based on mode
+    }
+    
+    // Handle user data based on mode
     let userData;
     
-    if (devMode === true || initData === 'dev_mode_access') {
+    if (devMode === true || initData === 'dev_mode_access' || process.env.NODE_ENV === 'development') {
       // Create mock data for development mode
       userData = {
         id: 12345678,  // Numeric ID to match Telegram ID type
@@ -59,24 +63,52 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Find or create the user in the database
-    const user = await prisma.user.upsert({
-      where: {
-        telegramId: userData.id,
-      },
-      update: {
-        username: userData.username,
-        firstName: userData.first_name,
-        language: userData.language_code,
-        updatedAt: new Date(),
-      },
-      create: {
-        telegramId: userData.id,
-        username: userData.username,
-        firstName: userData.first_name,
-        language: userData.language_code,
-      },
-    });
+    // If database initialization failed and we're not in development mode, return error
+    if (!dbResult.success && process.env.NODE_ENV !== 'development') {
+      return NextResponse.json(
+        { error: 'Database connection error', details: dbResult.error },
+        { status: 503 }
+      );
+    }
+    
+    let user;
+    
+    try {
+      // Find or create the user in the database
+      user = await prisma.user.upsert({
+        where: {
+          telegramId: userData.id,
+        },
+        update: {
+          username: userData.username,
+          firstName: userData.first_name,
+          language: userData.language_code,
+          updatedAt: new Date(),
+        },
+        create: {
+          telegramId: userData.id,
+          username: userData.username,
+          firstName: userData.first_name,
+          language: userData.language_code,
+        },
+      });
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError);
+      
+      // In development mode, create a mock user object
+      if (process.env.NODE_ENV === 'development') {
+        user = {
+          id: 'mock-user-id',
+          telegramId: userData.id,
+          username: userData.username,
+          firstName: userData.first_name,
+          activityPoints: 0,
+        };
+        console.log('Created mock user object:', user);
+      } else {
+        throw dbError; // Re-throw in production
+      }
+    }
 
     // Generate a session token (in a real app, use a proper auth library)
     // This is for demonstration - in production use next-auth or similar
@@ -101,7 +133,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (error) {
     console.error('Error in Telegram authentication:', error);
     return NextResponse.json(
-      { error: 'Authentication failed' }, 
+      { error: 'Authentication failed', message: error instanceof Error ? error.message : 'Unknown error' }, 
       { status: 500 }
     );
   }
