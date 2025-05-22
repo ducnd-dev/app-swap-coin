@@ -14,13 +14,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // Get init data from request
     const body = await req.json();
     const { initData, devMode } = body;
-
-    if (!initData) {
-      return NextResponse.json(
-        { error: 'Missing Telegram WebApp initData' }, 
-        { status: 400 }
-      );
-    }
+    // if (!initData) {
+    //   return NextResponse.json(
+    //     { error: 'Missing Telegram WebApp initData' }, 
+    //     { status: 400 }
+    //   );
+    // }
 
     // Check if in development mode
     if (devMode === true || initData === 'dev_mode_access') {

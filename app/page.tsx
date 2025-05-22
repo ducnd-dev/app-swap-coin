@@ -18,8 +18,74 @@ export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
+  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
   
   console.log('User:', user);
+
+  // Hàm debug để kiểm tra dữ liệu Telegram
+  const debugTelegramData = async () => {
+    try {
+      setIsLoading(true);
+      
+      let initData = '';
+      let source = 'unknown';
+      
+      // Kiểm tra xem có đang chạy trong Telegram WebApp không
+      if (typeof window !== 'undefined') {
+        // Kiểm tra SDK từ @twa-dev/sdk
+        const WebApp = await loadTelegramSDK();
+        if (WebApp && WebApp.initData) {
+          initData = WebApp.initData;
+          source = '@twa-dev/sdk';
+          console.log('Got initData from @twa-dev/sdk');
+        }
+        // Kiểm tra window.Telegram
+        else if (window.Telegram?.WebApp?.initData) {
+          initData = window.Telegram.WebApp.initData;
+          source = 'window.Telegram.WebApp';
+          console.log('Got initData from window.Telegram.WebApp');
+        } else {
+          console.log('No Telegram WebApp detected, creating valid mock data');
+          
+          // Tạo dữ liệu mẫu hợp lệ với định dạng đúng thay vì chuỗi đơn giản
+          try {
+            const mockResponse = await axios.post('/api/debug/mock-telegram-auth');
+            if (mockResponse.data && mockResponse.data.initData) {
+              initData = mockResponse.data.initData;
+              source = 'generated-mock';
+              console.log('Created valid mock initData with hash');
+            } else {
+              initData = 'query_id=AAHdF6IQAAAAAN0XohDhrOrc&user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Test%22%2C%22last_name%22%3A%22User%22%2C%22username%22%3A%22testuser%22%7D&auth_date=1677649836&hash=c5a478e19a9089bcad20712826391c0000000000000000000000000000000000';
+              source = 'static-mock';
+              console.log('Using static mock initData');
+            }
+          } catch (mockError) {
+            console.error('Failed to generate mock data:', mockError);
+            initData = 'query_id=AAHdF6IQAAAAAN0XohDhrOrc&user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Test%22%7D';
+            source = 'fallback-mock';
+          }
+        }
+      }
+      
+      // Gọi API debug để phân tích dữ liệu
+      const response = await axios.post('/api/debug/telegram', { initData });
+      const enhancedData = { 
+        ...response.data, 
+        source,
+        timestamp: new Date().toISOString()
+      };
+      setDebugInfo(enhancedData);
+      console.log('Debug response:', enhancedData);
+      
+      // Hiển thị kết quả
+      toast.success('Debug information collected');
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Debug error:', error);
+      toast.error('Error collecting debug information');
+      setIsLoading(false);
+    }
+  };
 
   // Development mode login handler
   const handleDevLogin = async () => {
@@ -187,12 +253,68 @@ export default function Home() {
           
           {/* Development mode login button */}
           {!user && !isLoading && (
-            <button
-              onClick={handleDevLogin}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200"
-            >
-              Login with Development Account
-            </button>
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={handleDevLogin}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200"
+              >
+                Login with Development Account
+              </button>
+              
+              {/* Debug button */}
+              <button 
+                onClick={debugTelegramData}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg shadow-md hover:bg-gray-700 transition-colors duration-200"
+              >
+                Debug Telegram Data
+              </button>
+              
+              {/* Test with mock initData */}
+              <button 
+                onClick={async () => {
+                  try {
+                    setIsLoading(true);
+                    // Generate mock initData with valid hash
+                    const mockResponse = await axios.post('/api/debug/mock-telegram-auth');
+                    
+                    if (mockResponse.data && mockResponse.data.initData) {
+                      console.log('Using mock initData:', mockResponse.data.initData);
+                      console.log('Mock details:', mockResponse.data.details);
+                      // Try to authenticate with the mock data
+                      authenticateUser(mockResponse.data.initData);
+                    } else {
+                      console.error('Failed to create mock data:', mockResponse.data);
+                      if (mockResponse.data.error && mockResponse.data.error.includes('TELEGRAM_BOT_TOKEN')) {
+                        toast.error('Bot token không được cấu hình đúng', { duration: 5000 });
+                      } else {
+                        toast.error('Error creating mock data');
+                      }
+                      setIsLoading(false);
+                    }
+                  } catch (error) {
+                    console.error('Mock auth error:', error);
+                    const errorMsg = error instanceof Error 
+                      ? error.message 
+                      : 'Mock authentication error';
+                    toast.error(errorMsg, { duration: 5000 });
+                    setIsLoading(false);
+                  }
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200"
+              >
+                Test với dữ liệu mẫu hợp lệ
+              </button>
+            </div>
+          )}
+          
+          {/* Debug information display */}
+          {debugInfo && (
+            <div className="mt-6 p-4 bg-gray-100 rounded-lg text-left w-full overflow-auto">
+              <h2 className="text-lg font-bold mb-2">Debug Information</h2>
+              <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
+                {JSON.stringify(debugInfo, null, 2)}
+              </pre>
+            </div>
           )}
           
           <p className="text-sm text-gray-500 mt-8">
