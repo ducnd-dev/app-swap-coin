@@ -11,7 +11,6 @@ export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
-  const [devMode, setDevMode] = useState(false);
   
   console.log('User:', user);
 
