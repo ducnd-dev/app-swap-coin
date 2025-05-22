@@ -7,10 +7,16 @@ import crypto from 'crypto';
  */
 export function validateTelegramWebAppData(initData: string): boolean {
   try {
+    console.log('Validating initData:', initData.substring(0, 50) + '...');
+    
     // Extract the data and hash from the init data
     const searchParams = new URLSearchParams(initData);
     const hash = searchParams.get('hash');
-    if (!hash) return false;
+    if (!hash) {
+      console.log('No hash found in the init data');
+      return false;
+    }
+    console.log('Hash from initData:', hash);
     
     // Remove the hash from the data to validate
     searchParams.delete('hash');
@@ -25,16 +31,26 @@ export function validateTelegramWebAppData(initData: string): boolean {
         dataCheckArray.push(`${key}=${value}`);
       }
     }
-    const dataCheckString = dataCheckArray.join('\n');
+    const dataCheckString = dataCheckArray.join('\n');    // Calculate the HMAC-SHA-256 signature
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || '';
+    console.log('TELEGRAM_BOT_TOKEN available:', !!botToken, 'Length:', botToken.length);
+    console.log('Data check string (first 50 chars):', dataCheckString.substring(0, 50) + '...');
     
-    // Calculate the HMAC-SHA-256 signature
+    // Log bot token format (first few chars, for debugging)
+    if (botToken) {
+      console.log('Bot token format check:', botToken.substring(0, 5) + '...');
+    }
+    
     const secretKey = crypto.createHmac('sha256', 'WebAppData')
-      .update(process.env.TELEGRAM_BOT_TOKEN || '')
+      .update(botToken)
       .digest();
     
     const calculatedHash = crypto.createHmac('sha256', secretKey)
       .update(dataCheckString)
       .digest('hex');
+    
+    console.log('Calculated hash:', calculatedHash);
+    console.log('Hash match:', calculatedHash === hash);
     
     // Compare the hash
     return calculatedHash === hash;

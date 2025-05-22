@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateTelegramWebAppData, extractTelegramUserData } from '@/app/lib/telegram/auth';
+import { extractTelegramUserData } from '@/app/lib/telegram/auth';
+import { validateTelegramWebAppData } from '@/app/lib/telegram/auth-fix';
 import { prisma, initializePrisma } from '@/app/lib/utils/server';
 
 /**
@@ -25,9 +26,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (devMode === true || initData === 'dev_mode_access') {
       console.log('Using development mode authentication');
       // Skip validation for development mode
-    } else {
-      // Validate the data for production
+    } else {      // Validate the data for production
+      console.log('Validating with bot token:', process.env.TELEGRAM_BOT_TOKEN ? 'Available' : 'Missing');
       const isValid = validateTelegramWebAppData(initData);
+      console.log('Validation result:', isValid);
       if (!isValid) {
         return NextResponse.json(
           { error: 'Invalid Telegram WebApp data' }, 

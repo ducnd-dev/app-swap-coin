@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
     
     return config;
   },
+  
+  // Make sure environment variables are available
+  env: {
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+  },
 
   // Experimental features
   experimental: {

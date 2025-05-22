@@ -50,9 +50,23 @@ export default function Home() {
   const authenticateUser = useCallback(async (initData: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.post('/api/auth/telegram', { initData });
+      console.log('Sending authentication request with initData length:', initData.length);
+      
+      const response = await axios.post('/api/auth/telegram', { initData })
+        .catch(err => {
+          console.error('API call error details:', {
+            status: err.response?.status,
+            statusText: err.response?.statusText,
+            data: err.response?.data,
+            message: err.message
+          });
+          throw err;
+        });
+      
+      console.log('Auth response status:', response.status);
       
       if (response.data && response.data.sessionToken) {
+        console.log('Authentication successful!');
         // Store user data and token
         localStorage.setItem('sessionToken', response.data.sessionToken);
         
@@ -64,7 +78,8 @@ export default function Home() {
         // Navigate to the dashboard
         router.push('/dashboard');
       } else {
-        throw new Error('Authentication failed');
+        console.error('Missing sessionToken in response:', response.data);
+        throw new Error('Authentication failed - missing session token');
       }
     } catch (error) {
       console.error('Authentication error:', error);
@@ -79,6 +94,10 @@ export default function Home() {
     if (typeof window === 'undefined') {
       return;
     }
+    
+    // Check if running in development mode
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
 
     const initApp = async () => {
       try {
@@ -91,6 +110,7 @@ export default function Home() {
         // Check if SDK is available and initialized
         if (WebApp && typeof WebApp.initData === 'string' && WebApp.initData) {
           console.log('Using @twa-dev/sdk WebApp');
+          console.log('WebApp initData (first 50 chars):', WebApp.initData.substring(0, 50) + '...');
           WebApp.expand();
           WebApp.ready();
           authenticateUser(WebApp.initData);
@@ -99,6 +119,13 @@ export default function Home() {
         
         // Fallback to window.Telegram if SDK is not working
         console.log('Checking window.Telegram:', window.Telegram);
+        if (window.Telegram && window.Telegram.WebApp) {
+          console.log('window.Telegram.WebApp initData available:', !!window.Telegram.WebApp.initData);
+          if (window.Telegram.WebApp.initData) {
+            console.log('window.Telegram initData (first 50 chars):', 
+              window.Telegram.WebApp.initData.substring(0, 50) + '...');
+          }
+        }
         if (window.Telegram && window.Telegram.WebApp) {
           console.log('Using window.Telegram.WebApp');
           const tg = window.Telegram.WebApp;
