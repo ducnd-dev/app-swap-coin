@@ -5,7 +5,14 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Image from "next/image";
 import { Toaster, toast } from 'react-hot-toast';
-import WebApp from '@twa-dev/sdk';
+
+// Dynamic imports for client-side only
+const loadTelegramSDK = () => {
+  if (typeof window !== 'undefined') {
+    return import('@twa-dev/sdk').then(module => module.default);
+  }
+  return null;
+};
 
 export default function Home() {
   const router = useRouter();
@@ -68,53 +75,55 @@ export default function Home() {
 
   // Initialize app (with support for both Telegram WebApp and standalone mode)
   useEffect(() => {
-    // Debug info
-    console.log('WebApp from @twa-dev/sdk:', WebApp);
-    
-    // First try to use the @twa-dev/sdk package
-    try {
-      if (WebApp && typeof WebApp.initData === 'string') {
-        console.log('Using @twa-dev/sdk WebApp');
-        
-        // Expand the WebApp UI
-        WebApp.expand();
-        WebApp.ready();
-        
-        // Authenticate using the WebApp initData
-        authenticateUser(WebApp.initData);
-        return;
-      }
-    } catch (sdkError) {
-      console.error('Error with @twa-dev/sdk:', sdkError);
+    // Ensure this code only runs in the browser
+    if (typeof window === 'undefined') {
+      return;
     }
-    
-    // Fallback to window.Telegram if SDK is not working
-    console.log('Telegram object from window:', window.Telegram);
-    if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-      // Telegram WebApp mode
+
+    const initApp = async () => {
       try {
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+        // Try to load the SDK
+        const WebApp = await loadTelegramSDK();
         
-        // Authenticate the user with Telegram
-        authenticateUser(tg.initData);
-      } catch (error) {
-        console.error('Error initializing Telegram WebApp:', error);
+        // Debug info
+        console.log('WebApp SDK loaded:', WebApp);
+        
+        // Check if SDK is available and initialized
+        if (WebApp && typeof WebApp.initData === 'string' && WebApp.initData) {
+          console.log('Using @twa-dev/sdk WebApp');
+          WebApp.expand();
+          WebApp.ready();
+          authenticateUser(WebApp.initData);
+          return;
+        }
+        
+        // Fallback to window.Telegram if SDK is not working
+        console.log('Checking window.Telegram:', window.Telegram);
+        if (window.Telegram && window.Telegram.WebApp) {
+          console.log('Using window.Telegram.WebApp');
+          const tg = window.Telegram.WebApp;
+          tg.expand();
+          tg.ready();
+          authenticateUser(tg.initData);
+          return;
+        }
+        
+        // Development mode - no Telegram environment detected
+        console.log('Running in standalone/development mode');
         setIsLoading(false);
-        toast.error('Error connecting to Telegram');
+        toast('Running in development mode', { 
+          icon: '🛠️',
+          duration: 5000
+        });
+        
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        setIsLoading(false);
+        toast.error('Error initializing app');
       }
-    } else {
-      // Development/Standalone mode
-      console.log('Running in standalone mode (not in Telegram WebApp)');
-      
-      // Show login screen with development login option
-      setIsLoading(false);
-      toast('Running in development mode', { 
-        icon: '🛠️',
-        duration: 5000
-      });
-    }
+    };
+
+    initApp();
   }, [authenticateUser]);
   
   return (
