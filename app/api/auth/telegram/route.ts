@@ -10,10 +10,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Initialize Prisma before use
     await initializePrisma();
-    
-    // Get init data from request
+      // Get init data from request
     const body = await req.json();
-    const { initData } = body;
+    const { initData, devMode } = body;
 
     if (!initData) {
       return NextResponse.json(
@@ -22,22 +21,41 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Validate the data
-    const isValid = validateTelegramWebAppData(initData);
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid Telegram WebApp data' }, 
-        { status: 401 }
-      );
-    }
-
-    // Extract user data
-    const userData = extractTelegramUserData(initData);
-    if (!userData) {
-      return NextResponse.json(
-        { error: 'Could not extract user data' }, 
-        { status: 400 }
-      );
+    // Check if in development mode
+    if (devMode === true || initData === 'dev_mode_access') {
+      console.log('Using development mode authentication');
+      // Skip validation for development mode
+    } else {
+      // Validate the data for production
+      const isValid = validateTelegramWebAppData(initData);
+      if (!isValid) {
+        return NextResponse.json(
+          { error: 'Invalid Telegram WebApp data' }, 
+          { status: 401 }
+        );
+      }
+    }    // Handle user data based on mode
+    let userData;
+    
+    if (devMode === true || initData === 'dev_mode_access') {
+      // Create mock data for development mode
+      userData = {
+        id: 12345678,  // Numeric ID to match Telegram ID type
+        username: "dev_user",
+        first_name: "Developer",
+        language_code: "en",
+        is_dev: true
+      };
+      console.log('Using development user:', userData);
+    } else {
+      // Extract real user data from Telegram
+      userData = extractTelegramUserData(initData);
+      if (!userData) {
+        return NextResponse.json(
+          { error: 'Could not extract user data' }, 
+          { status: 400 }
+        );
+      }
     }
 
     // Find or create the user in the database

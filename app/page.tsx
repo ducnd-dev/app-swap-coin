@@ -5,12 +5,40 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Image from "next/image";
 import { Toaster, toast } from 'react-hot-toast';
+import WebApp from '@twa-dev/sdk';
 
 export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
-console.log('User:', user);
+  const [devMode, setDevMode] = useState(false);
+  
+  console.log('User:', user);
+
+  // Development mode login handler
+  const handleDevLogin = async () => {
+    setIsLoading(true);
+    try {
+      // Call auth endpoint with mock data
+      const response = await axios.post('/api/auth/telegram', { 
+        initData: "dev_mode_access",
+        devMode: true // Flag to indicate development mode
+      });
+      
+      if (response.data && response.data.sessionToken) {
+        localStorage.setItem('sessionToken', response.data.sessionToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.sessionToken}`;
+        setUser(response.data.user);
+        router.push('/dashboard');
+      } else {
+        throw new Error('Development authentication failed');
+      }
+    } catch (error) {
+      console.error('Dev auth error:', error);
+      toast.error('Failed to authenticate in development mode');
+      setIsLoading(false);
+    }
+  };
 
   // Authenticate user with the server (wrapped in useCallback)
   const authenticateUser = useCallback(async (initData: string) => {
@@ -39,22 +67,54 @@ console.log('User:', user);
     }
   }, [router]);
 
-  // Initialize Telegram WebApp
+  // Initialize app (with support for both Telegram WebApp and standalone mode)
   useEffect(() => {
-    // Check if running in Telegram WebApp environment
+    // Debug info
+    console.log('WebApp from @twa-dev/sdk:', WebApp);
+    
+    // First try to use the @twa-dev/sdk package
+    try {
+      if (WebApp && typeof WebApp.initData === 'string') {
+        console.log('Using @twa-dev/sdk WebApp');
+        
+        // Expand the WebApp UI
+        WebApp.expand();
+        WebApp.ready();
+        
+        // Authenticate using the WebApp initData
+        authenticateUser(WebApp.initData);
+        return;
+      }
+    } catch (sdkError) {
+      console.error('Error with @twa-dev/sdk:', sdkError);
+    }
+    
+    // Fallback to window.Telegram if SDK is not working
+    console.log('Telegram object from window:', window.Telegram);
     if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp;
-      
-      // Initialize Telegram WebApp
-      tg.expand();
-      tg.ready();
-      
-      // Authenticate the user
-      authenticateUser(tg.initData);
+      // Telegram WebApp mode
+      try {
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        
+        // Authenticate the user with Telegram
+        authenticateUser(tg.initData);
+      } catch (error) {
+        console.error('Error initializing Telegram WebApp:', error);
+        setIsLoading(false);
+        toast.error('Error connecting to Telegram');
+      }
     } else {
-      // Not running in Telegram WebApp
+      // Development/Standalone mode
+      console.log('Running in standalone mode (not in Telegram WebApp)');
+      
+      // Show login screen with development login option
       setIsLoading(false);
-      toast.error('This app must be opened from Telegram');
+      toast('Running in development mode', { 
+        icon: '🛠️',
+        duration: 5000
+      });
     }
   }, [authenticateUser]);
   
@@ -89,6 +149,16 @@ console.log('User:', user);
               Telegram WebApp link.
             </p>
           </div>
+          
+          {/* Development mode login button */}
+          {!user && !isLoading && (
+            <button
+              onClick={handleDevLogin}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200"
+            >
+              Login with Development Account
+            </button>
+          )}
           
           <p className="text-sm text-gray-500 mt-8">
             © 2025 Swap Coin App. All rights reserved.

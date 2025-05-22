@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npx prisma generate && next dev --turbopack",
     "dev:safe": "npx prisma generate && next dev",
-    "dev:clean": "bash ./clean-dev.sh", 
+    "dev:clean": "bash ./clean-dev.sh",
     "dev:clean:win": "clean-dev.bat",
     "build": "npx prisma generate && next build",
     "start": "next start",
@@ -18,6 +18,7 @@
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-tabs": "^1.1.12",
     "@tanstack/react-query": "^5.76.1",
+    "@twa-dev/sdk": "^8.0.2",
     "@types/uuid": "^10.0.0",
     "@web3-react/core": "^8.2.3",
     "axios": "^1.9.0",
