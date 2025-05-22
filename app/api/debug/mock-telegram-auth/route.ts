@@ -8,6 +8,8 @@ import crypto from 'crypto';
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    console.log('Creating mock Telegram WebApp initData', req);
+    
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     
     if (!botToken) {

@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const { initData } = body;
     
     // Parse and analyze the initData
-    let analysis: Record<string, any> = {
+    const analysis: Record<string, unknown> = {
       received: !!initData,
       length: initData?.length || 0,
       env: {
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
               username: user.username,
               first_name: user.first_name,
             };
-          } catch (e) {
+          } catch {
             analysis.userParsed = { error: 'Failed to parse user data' };
           }
         }
