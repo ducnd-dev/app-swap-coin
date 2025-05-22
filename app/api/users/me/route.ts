@@ -41,18 +41,37 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         userId: user.id,
       },
     });
-
-    const totalVolume = await prisma.transaction.aggregate({
+    
+    // Get the successful transactions to calculate volume
+    const successTransactions = await prisma.transaction.findMany({
       where: {
         userId: user.id,
         status: 'SUCCESS',
       },
-      _sum: {
-        // This is a simplification - in real app, convert each transaction amount to USD
-        // For now, we'll just count the number of transactions as a proxy
-      },
+      select: {
+        fromAmount: true,
+        rate: true,
+        slippage: true
+      }
     });
-    console.log('totalVolume', totalVolume);
+    
+    // Calculate total volume by summing fromAmount values (parsing from string)
+    const totalVolumeUSD = successTransactions.reduce((sum, tx) => {
+      // Try to parse the fromAmount as a number
+      try {
+        const amount = parseFloat(tx.fromAmount);
+        return !isNaN(amount) ? sum + amount : sum;
+      } catch {
+        return sum;
+      }
+    }, 0);
+    
+    // Calculate average slippage
+    const avgSlippage = successTransactions.length > 0 
+      ? successTransactions.reduce((sum, tx) => sum + (tx.slippage || 0), 0) / successTransactions.length
+      : 0;
+    
+    console.log('Transaction stats:', { totalVolumeUSD, avgSlippage });
     
     return NextResponse.json({
       user: {
@@ -73,8 +92,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       })),
       stats: {
         transactionCount,
-        // In a real app, calculate actual USD volume
-        totalVolumeUSD: transactionCount * 100, // Mock value for demonstration
+        totalVolumeUSD, 
+        avgSlippage: parseFloat(avgSlippage.toFixed(4)) // Format to 4 decimal places
       },
     });
   } catch (error) {
