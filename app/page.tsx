@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import axiosClient from '@/app/lib/api/axios';
 import Image from "next/image";
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -49,7 +49,7 @@ export default function Home() {
           
           // Tạo dữ liệu mẫu hợp lệ với định dạng đúng thay vì chuỗi đơn giản
           try {
-            const mockResponse = await axios.post('/api/debug/mock-telegram-auth');
+            const mockResponse = await axiosClient.post('/api/debug/mock-telegram-auth');
             if (mockResponse.data && mockResponse.data.initData) {
               initData = mockResponse.data.initData;
               source = 'generated-mock';
@@ -68,7 +68,7 @@ export default function Home() {
       }
       
       // Gọi API debug để phân tích dữ liệu
-      const response = await axios.post('/api/debug/telegram', { initData });
+      const response = await axiosClient.post('/api/debug/telegram', { initData });
       const enhancedData = { 
         ...response.data, 
         source,
@@ -94,7 +94,7 @@ export default function Home() {
       console.log('Attempting development mode login');
       
       // Call auth endpoint with mock data
-      const response = await axios.post('/api/auth/telegram', { 
+      const response = await axiosClient.post('/api/auth/telegram', { 
         initData: "dev_mode_access",
         devMode: true // Flag to indicate development mode
       }).catch(err => {
@@ -111,7 +111,7 @@ export default function Home() {
       
       if (response.data && response.data.sessionToken) {
         localStorage.setItem('sessionToken', response.data.sessionToken);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.sessionToken}`;
+        axiosClient.defaults.headers.common['Authorization'] = `Bearer ${response.data.sessionToken}`;
         setUser(response.data.user);
         
         toast.success('Logged in as development user');
@@ -132,7 +132,7 @@ export default function Home() {
       setIsLoading(true);
       console.log('Sending authentication request with initData length:', initData.length);
       
-      const response = await axios.post('/api/auth/telegram', { initData })
+      const response = await axiosClient.post('/api/auth/telegram', { initData })
         .catch(err => {
           console.error('API call error details:', {
             status: err.response?.status,
@@ -150,8 +150,7 @@ export default function Home() {
         // Store user data and token
         localStorage.setItem('sessionToken', response.data.sessionToken);
         
-        // Configure axios default headers for future requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.sessionToken}`;
+        // Token will be automatically included in future requests by axiosClient
         
         setUser(response.data.user);
         
@@ -304,7 +303,7 @@ export default function Home() {
                   try {
                     setIsLoading(true);
                     // Generate mock initData with valid hash
-                    const mockResponse = await axios.post('/api/debug/mock-telegram-auth');
+                    const mockResponse = await axiosClient.post('/api/debug/mock-telegram-auth');
                     
                     if (mockResponse.data && mockResponse.data.initData) {
                       console.log('Using mock initData:', mockResponse.data.initData);

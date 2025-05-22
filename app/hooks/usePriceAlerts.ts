@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axiosClient from '@/app/lib/api/axios';
 import { toast } from 'react-hot-toast';
 
 export interface PriceAlert {
@@ -41,7 +41,7 @@ export const usePriceAlerts = (options: UsePriceAlertsOptions = {}) => {
         Object.assign(params, { status: statusFilter });
       }
       
-      const response = await axios.get('/api/price-alerts', { params });
+      const response = await axiosClient.get('/api/price-alerts', { params });
       setAlerts(response.data.alerts);
       
     } catch (error) {
@@ -74,7 +74,7 @@ export const usePriceAlerts = (options: UsePriceAlertsOptions = {}) => {
     try {
       setError(null);
       
-      await axios.post('/api/price-alerts', {
+      await axiosClient.post('/api/price-alerts', {
         tokenId,
         targetPrice,
         condition
@@ -104,7 +104,7 @@ export const usePriceAlerts = (options: UsePriceAlertsOptions = {}) => {
     try {
       setError(null);
       
-      await axios.delete(`/api/price-alerts/${alertId}`);
+      await axiosClient.delete(`/api/price-alerts/${alertId}`);
       
       toast.success('Price alert deleted successfully');
       setAlerts(prev => prev.filter(alert => alert.id !== alertId));
@@ -122,7 +122,7 @@ export const usePriceAlerts = (options: UsePriceAlertsOptions = {}) => {
     try {
       setError(null);
       
-      await axios.patch(`/api/price-alerts/${alertId}`, {
+      await axiosClient.patch(`/api/price-alerts/${alertId}`, {
         isActive: !isActive
       });
       

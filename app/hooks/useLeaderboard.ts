@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axiosClient from '@/app/lib/api/axios';
 import { toast } from 'react-hot-toast';
 
 export interface LeaderboardUser {
@@ -32,7 +32,7 @@ export const useLeaderboard = () => {
   const fetchWeeklyLeaderboard = useCallback(async () => {
     try {
       setIsLoadingWeekly(true);
-      const response = await axios.get('/api/leaderboard/weekly');
+      const response = await axiosClient.get('/api/leaderboard/weekly');
       setWeeklyLeaderboard(response.data.users);
       return response.data.users;
     } catch (error) {
@@ -47,7 +47,7 @@ export const useLeaderboard = () => {
   const fetchMonthlyLeaderboard = useCallback(async () => {
     try {
       setIsLoadingMonthly(true);
-      const response = await axios.get('/api/leaderboard/monthly');
+      const response = await axiosClient.get('/api/leaderboard/monthly');
       setMonthlyLeaderboard(response.data.users);
       return response.data.users;
     } catch (error) {
@@ -62,7 +62,7 @@ export const useLeaderboard = () => {
   const fetchUserRanking = useCallback(async () => {
     try {
       setIsLoadingUserRanking(true);
-      const response = await axios.get('/api/users/me/points');
+      const response = await axiosClient.get('/api/users/me/points');
       setUserRanking(response.data);
       return response.data;
     } catch (error) {

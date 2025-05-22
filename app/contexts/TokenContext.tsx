@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
-import axios from 'axios';
+import axiosClient from '@/app/lib/api/axios';
 import { toast } from 'react-hot-toast';
 
 export interface Token {
@@ -41,11 +41,10 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const [tokenPrices, setTokenPrices] = useState<Record<string, TokenPrice>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
   // Function to fetch price for a specific token
   const fetchTokenPrice = async (tokenId: string): Promise<number | null> => {
     try {
-      const response = await axios.get('/api/tokens/price', {
+      const response = await axiosClient.get('/api/tokens/price', {
         params: { tokenId }
       });
       
@@ -75,7 +74,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       setError(null);
 
-      const response = await axios.get('/api/tokens/search');
+      const response = await axiosClient.get('/api/tokens/search');
       const fetchedTokens = response.data.tokens;
       setTokens(fetchedTokens);
       
@@ -111,7 +110,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const response = await axios.get('/api/tokens/search', {
+      const response = await axiosClient.get('/api/tokens/search', {
         params: { query }
       });
       return response.data.tokens;

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ArrowDown, RefreshCw, Settings, AlertCircle, ChevronDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import axios from 'axios';
+import axiosClient from '@/app/lib/api/axios';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
 import { useTokens, Token } from '@/app/contexts/TokenContext';
@@ -131,7 +131,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
     try {
       setIsLoading(true);
       setSwapButtonState('loading');
-      setError(null);      await axios.post('/api/swap/execute', {
+      setError(null);      await axiosClient.post('/api/swap/execute', {
         fromTokenId: fromToken.id,
         toTokenId: toToken.id,
         fromAmount,

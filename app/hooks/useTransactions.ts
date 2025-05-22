@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axiosClient from '@/app/lib/api/axios';
 import { toast } from 'react-hot-toast';
 
 export interface Transaction {
@@ -54,7 +54,7 @@ export const useTransactions = (options: UseTransactionsOptions = {}) => {
       setIsLoading(true);
       setError(null);
       
-      const response = await axios.get<TransactionsResponse>('/api/transactions', {
+      const response = await axiosClient.get<TransactionsResponse>('/api/transactions', {
         params: {
           page: pageToFetch,
           limit,

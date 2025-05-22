@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import axiosClient from '@/app/lib/api/axios';
 import { toast } from 'react-hot-toast';
 
 export interface Wallet {
@@ -36,14 +37,13 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchWallets();
   }, []);
-
   // Function to fetch wallets from API
   const fetchWallets = async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const response = await axios.get('/api/wallets');
+      const response = await axiosClient.get('/api/wallets');
       const fetchedWallets = response.data.wallets;
       
       setWallets(fetchedWallets);
@@ -69,12 +69,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const selectWallet = (wallet: Wallet) => {
     setSelectedWallet(wallet);
   };
-
   // Function to add a new wallet
   const addWallet = async (wallet: Omit<Wallet, 'id' | 'isDefault'>) => {
     try {
       setError(null);
-      const response = await axios.post('/api/wallets', wallet);
+      const response = await axiosClient.post('/api/wallets', wallet);
       
       if (response.status === 201) {
         toast.success('Wallet added successfully');
@@ -91,12 +90,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
   };
-
   // Function to remove a wallet
   const removeWallet = async (walletId: string) => {
     try {
       setError(null);
-      const response = await axios.delete(`/api/wallets/${walletId}`);
+      const response = await axiosClient.delete(`/api/wallets/${walletId}`);
       
       if (response.status === 200) {
         toast.success('Wallet removed successfully');
@@ -111,12 +109,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
   };
-
   // Function to set a wallet as default
   const setDefaultWallet = async (walletId: string) => {
     try {
       setError(null);
-      const response = await axios.put(`/api/wallets/${walletId}/default`);
+      const response = await axiosClient.put(`/api/wallets/${walletId}/default`);
       
       if (response.status === 200) {
         toast.success('Default wallet updated');

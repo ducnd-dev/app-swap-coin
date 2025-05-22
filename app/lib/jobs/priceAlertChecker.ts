@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from 'axios'; // Keep using regular axios for server-side code
 import { prisma } from '../utils/prisma';
 
 interface TelegramConfig {

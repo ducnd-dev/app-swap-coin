@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import axiosClient from '@/app/lib/api/axios';
 import { Token } from '@/app/contexts/TokenContext';
 
 interface TokenPrice {
@@ -29,7 +29,7 @@ export const useTokenOperations = () => {
         return cachedPrice.price;
       }
       
-      const response = await axios.get('/api/tokens/price', {
+      const response = await axiosClient.get('/api/tokens/price', {
         params: { tokenId }
       });
       
@@ -63,7 +63,7 @@ export const useTokenOperations = () => {
     }
 
     try {
-      const response = await axios.get('/api/tokens/search', {
+      const response = await axiosClient.get('/api/tokens/search', {
         params: { query }
       });
       return response.data.tokens;
@@ -81,7 +81,7 @@ export const useTokenOperations = () => {
     slippage: number = 0.5
   ) => {
     try {
-      const response = await axios.get('/api/swap/quote', {
+      const response = await axiosClient.get('/api/swap/quote', {
         params: {
           fromTokenId,
           toTokenId,
