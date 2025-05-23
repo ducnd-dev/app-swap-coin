@@ -1,6 +1,8 @@
-// import axios from 'axios';
-import axios from 'axios'; // Re-enable axios import for API calls
-import { prisma } from '../utils/prisma';
+import axios, { AxiosError } from 'axios';
+
+// CoinAPI configuration
+const COINAPI_KEY = process.env.COINAPI_KEY || '';
+const COINAPI_URL = 'https://rest.coinapi.io/v1';
 
 // Cache price data to minimize API calls
 interface PriceCache {
@@ -14,81 +16,118 @@ interface PriceCache {
 const priceCache: PriceCache = {};
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-// CoinAPI configuration
-const COINAPI_KEY = process.env.COINAPI_KEY || '';
-const COINAPI_URL = 'https://rest.coinapi.io/v1';
+// Define types for better type safety
+export interface PriceData {
+  symbol: string;
+  price: number;
+  timestamp: number;
+  source: 'api' | 'mock';
+}
+
+export interface PriceDataPoint {
+  time_period_start: string;
+  time_period_end: string;
+  time_open?: string;
+  time_close?: string;
+  price_open: number;
+  price_high: number;
+  price_low: number;
+  price_close: number;
+  volume_traded?: number;
+  trades_count?: number;
+  source?: 'api' | 'mock';
+}
+
+export interface ApiErrorResponse {
+  error: true;
+  message: string;
+  details?: unknown;
+}
 
 /**
- * Get token price from CoinAPI
+ * Get token price from CoinAPI - Database-free implementation
  * @param tokenSymbol - The token symbol
  * @returns The current price in USD
  */
-export async function getTokenPrice(tokenSymbol: string): Promise<number> {
+export async function getTokenPrice(tokenSymbol: string): Promise<PriceData | ApiErrorResponse> {
   try {
+    // Normalize symbol
+    const symbol = tokenSymbol.toUpperCase();
+    
     // Check cache first
-    const cachedData = priceCache[tokenSymbol];
+    const cachedData = priceCache[symbol];
     const now = Date.now();
     
     if (cachedData && now - cachedData.timestamp < CACHE_TTL) {
-      return cachedData.price;
+      return {
+        symbol,
+        price: cachedData.price,
+        timestamp: cachedData.timestamp,
+        source: 'mock' // Mark as coming from cache
+      };
     }
 
-    // Get token data from database
-    const token = await prisma.token.findUnique({
-      where: { symbol: tokenSymbol },
-    });
-
-    if (!token) {
-      throw new Error(`Token ${tokenSymbol} not found in database`);
-    }
-
-    // Use CoinAPI in production
+    // Use CoinAPI if API key is available
     let price: number;
+    let source: 'api' | 'mock' = 'mock';
 
-    if (COINAPI_KEY && process.env.NODE_ENV === 'production') {
+    if (COINAPI_KEY) {
       try {
         // Format the asset pair for CoinAPI (e.g., BTC/USD)
-        const assetPair = `${tokenSymbol.toUpperCase()}/USD`;
+        const assetPair = `${symbol}/USD`;
         
         // Call CoinAPI for current exchange rate
         const response = await axios.get(`${COINAPI_URL}/exchangerate/${assetPair}`, {
           headers: {
             'X-CoinAPI-Key': COINAPI_KEY
-          }
+          },
+          timeout: 10000 // 10 seconds timeout
         });
         
         price = response.data.rate;
-        console.log(`CoinAPI price for ${tokenSymbol}: $${price}`);
+        source = 'api';
+        console.log(`CoinAPI price for ${symbol}: $${price}`);
       } catch (apiError) {
-        console.error(`CoinAPI error for ${tokenSymbol}:`, apiError);
+        console.error(`CoinAPI error for ${symbol}:`, apiError);
         // Fall back to mock prices if API call fails
-        price = getMockPrice(tokenSymbol);
+        price = getMockPrice(symbol);
       }
     } else {
-      // Use mock prices for development or when API key is not available
-      price = getMockPrice(tokenSymbol);
+      // Use mock prices when API key is not available
+      price = getMockPrice(symbol);
     }
 
     // Update cache
-    priceCache[tokenSymbol] = {
+    priceCache[symbol] = {
       price,
       timestamp: now,
     };
 
-    return price;
+    return {
+      symbol,
+      price,
+      timestamp: now,
+      source
+    };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Error getting price for ${tokenSymbol}:`, error);
-    throw error;
+    
+    return {
+      error: true,
+      message: `Failed to get price for ${tokenSymbol}: ${errorMessage}`,
+      details: error
+    };
   }
 }
 
 /**
- * Get mock price for development environment
+ * Get mock price for development or when API is unavailable
  * @param tokenSymbol - The token symbol
  * @returns A simulated price
  */
 function getMockPrice(tokenSymbol: string): number {
-  // For demo purposes, use some recognizable mock prices
+  // For demo purposes, use recognizable mock prices
   switch (tokenSymbol.toUpperCase()) {
     case 'BTC':
       return 50000 + (Math.random() * 1000 - 500); // Around 50,000
@@ -105,18 +144,18 @@ function getMockPrice(tokenSymbol: string): number {
 }
 
 /**
- * Get multiple token prices at once
+ * Get multiple token prices at once without database dependency
  * @param tokenSymbols - Array of token symbols
- * @returns Object with token symbols as keys and prices as values
+ * @returns Object with token symbols as keys and price data as values
  */
 export async function getMultipleTokenPrices(
   tokenSymbols: string[]
-): Promise<Record<string, number>> {
+): Promise<Record<string, PriceData | ApiErrorResponse>> {
   try {
-    const results: Record<string, number> = {};
+    const results: Record<string, PriceData | ApiErrorResponse> = {};
     
     // Process in batches to avoid overwhelming APIs
-    const batchSize = 10;
+    const batchSize = 5; // Smaller batch size to avoid rate limits
     
     for (let i = 0; i < tokenSymbols.length; i += batchSize) {
       const batch = tokenSymbols.slice(i, i + batchSize);
@@ -129,43 +168,53 @@ export async function getMultipleTokenPrices(
       batch.forEach((symbol, index) => {
         results[symbol] = prices[index];
       });
+      
+      // Add a small delay between batches to be API-friendly
+      if (i + batchSize < tokenSymbols.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
     
     return results;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error getting multiple token prices:', error);
-    throw error;
+    
+    // Return an object with error for each requested symbol
+    const errorResults: Record<string, ApiErrorResponse> = {};
+    tokenSymbols.forEach(symbol => {
+      errorResults[symbol] = {
+        error: true,
+        message: `Failed to get price: ${errorMessage}`,
+        details: error
+      };
+    });
+    
+    return errorResults;
   }
 }
 
 /**
- * Get historical price data for a token
+ * Get historical price data for a token without database dependency
  * @param tokenSymbol - The token symbol
  * @param days - Number of days of historical data to retrieve
  * @returns Array of historical price points
  */
-interface PriceDataPoint {
-  time_period_start: string;
-  time_period_end: string;
-  time_open: string;
-  time_close: string;
-  price_open: number;
-  price_high: number;
-  price_low: number;
-  price_close: number;
-  volume_traded: number;
-  trades_count: number;
-}
-
-export async function getHistoricalPrices(tokenSymbol: string, days: number = 7): Promise<PriceDataPoint[]> {
+export async function getHistoricalPrices(
+  tokenSymbol: string, 
+  days: number = 7
+): Promise<PriceDataPoint[] | ApiErrorResponse> {
   try {
-    // For development or when API key is not available, return mock data
-    if (!COINAPI_KEY || process.env.NODE_ENV !== 'production') {
-      return generateMockHistoricalPrices(tokenSymbol, days);
+    // Normalize symbol
+    const symbol = tokenSymbol.toUpperCase();
+    
+    // If no API key is available, return mock data right away
+    if (!COINAPI_KEY) {
+      return generateMockHistoricalPrices(symbol, days);
     }
 
     // Format the asset pair for CoinAPI (e.g., BTC/USD)
-    const assetPair = `${tokenSymbol.toUpperCase()}/USD`;
+    const assetPair = `${symbol}/USD`;
     
     // Calculate the start and end dates
     const endDate = new Date();
@@ -188,31 +237,47 @@ export async function getHistoricalPrices(tokenSymbol: string, days: number = 7)
             time_start: startDateStr,
             time_end: endDateStr,
             limit: days
-          }
+          },
+          timeout: 10000 // 10 seconds timeout
         }
       );
       
-      console.log(`CoinAPI historical data for ${tokenSymbol}:`, response.data);
-      return response.data;
+      // Add source information to each data point
+      const apiData = response.data.map((point: PriceDataPoint) => ({
+        ...point,
+        source: 'api' as const
+      }));
+      
+      console.log(`CoinAPI historical data for ${symbol}: ${apiData.length} points`);
+      return apiData;
     } catch (apiError) {
-      console.error(`CoinAPI historical data error for ${tokenSymbol}:`, apiError);
+      const axiosError = apiError as AxiosError;
+      console.error(`CoinAPI historical data error for ${symbol}:`, 
+        axiosError.response?.data || axiosError.message);
+      
       // Fall back to mock data if API call fails
-      return generateMockHistoricalPrices(tokenSymbol, days);
+      return generateMockHistoricalPrices(symbol, days);
     }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Error getting historical prices for ${tokenSymbol}:`, error);
-    throw error;
+    
+    return {
+      error: true,
+      message: `Failed to get historical prices for ${tokenSymbol}: ${errorMessage}`,
+      details: error
+    };
   }
 }
 
 /**
- * Generate mock historical price data for development
+ * Generate mock historical price data for development or when API is unavailable
  * @param tokenSymbol - The token symbol
  * @param days - Number of days of data to generate
  * @returns Array of mock price data points
  */
 function generateMockHistoricalPrices(tokenSymbol: string, days: number): PriceDataPoint[] {
-  const data = [];
+  const data: PriceDataPoint[] = [];
   const endDate = new Date();
   let basePrice: number;
   
@@ -256,61 +321,10 @@ function generateMockHistoricalPrices(tokenSymbol: string, days: number): PriceD
       price_low: basePrice - (Math.random() * 0.02 * basePrice),
       price_close: basePrice,
       volume_traded: Math.random() * 10000,
-      trades_count: Math.floor(Math.random() * 1000)
+      trades_count: Math.floor(Math.random() * 1000),
+      source: 'mock'
     });
   }
   
   return data;
-}
-
-/**
- * Check price alerts and trigger notifications if conditions are met
- */
-export async function checkPriceAlerts(): Promise<void> {
-  try {
-    // Get all active price alerts
-    const alerts = await prisma.priceAlert.findMany({
-      where: {
-        isActive: true,
-        isTriggered: false,
-      },
-      include: {
-        user: true,
-        token: true,
-      },
-    });
-
-    // Process each alert
-    for (const alert of alerts) {
-      const currentPrice = await getTokenPrice(alert.token.symbol);
-
-      // Check if condition is met
-      const isTriggered = 
-        (alert.condition === 'ABOVE' && currentPrice >= alert.targetPrice) ||
-        (alert.condition === 'BELOW' && currentPrice <= alert.targetPrice);
-
-      if (isTriggered) {
-        // Update alert status
-        await prisma.priceAlert.update({
-          where: { id: alert.id },
-          data: { isTriggered: true },
-        });
-
-        // Import only when needed to avoid circular dependencies
-        const { sendPriceAlertNotification } = await import('../telegram/bot');
-
-        // Send notification
-        await sendPriceAlertNotification(
-          alert.user.telegramId,
-          alert.id,
-          alert.token.symbol,
-          currentPrice,
-          alert.targetPrice,
-          alert.condition as 'ABOVE' | 'BELOW'
-        );
-      }
-    }
-  } catch (error) {
-    console.error('Error checking price alerts:', error);
-  }
 }

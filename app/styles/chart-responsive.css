@@ -1,0 +1,76 @@
+/* Chart Responsive Styles */
+
+/* Base styling for chart containers */
+.chart-container {
+  width: 100%;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* Make charts responsive on all screen sizes */
+.recharts-responsive-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Adjust tooltip styling for better mobile readability */
+.recharts-tooltip-wrapper {
+  max-width: 90vw;
+}
+
+.recharts-default-tooltip {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 8px 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  border-radius: 6px !important;
+}
+
+/* Custom styling for mobile chart controls */
+@media (max-width: 640px) {
+  .chart-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .chart-controls .chart-type-selector {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .chart-container-sm {
+    height: 240px !important;
+  }
+
+  .chart-container-md {
+    height: 280px !important;
+  }
+
+  .recharts-default-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .recharts-legend-item {
+    margin: 0 5px 5px 0 !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .recharts-default-tooltip {
+    background-color: rgba(30, 41, 59, 0.9) !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+  }
+
+  .recharts-tooltip-label {
+    color: #e2e8f0 !important;
+  }
+
+  .recharts-tooltip-item {
+    color: #e2e8f0 !important;
+  }
+}

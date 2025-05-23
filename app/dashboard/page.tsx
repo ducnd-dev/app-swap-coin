@@ -53,17 +53,33 @@ export default function Dashboard() {
           selectedWallet={selectedWallet}
           onWalletChange={handleWalletChange}
         />
-      </div>
-
-      {/* Main content tabs */}
-      <Tabs defaultValue="swap" className="w-full">
-        <TabsList className="grid grid-cols-5 mb-6">
+      </div>      {/* Main content tabs */}      <Tabs defaultValue="swap" className="w-full">
+        <TabsList className="grid grid-cols-4 mb-6">
           <TabsTrigger value="swap">Swap</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
           <TabsTrigger value="leaderboard">Rank</TabsTrigger>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
         </TabsList>
+        <div className="flex justify-between mt-2 mb-4 text-xs">
+          <button 
+            onClick={() => router.push('/tokens')}
+            className="text-blue-600 hover:underline"
+          >
+            Token Prices
+          </button>
+          <button 
+            onClick={() => router.push('/blockchain')}
+            className="text-blue-600 hover:underline"
+          >
+            Blockchain Explorer
+          </button>
+          <button 
+            onClick={logout}
+            className="text-red-600 hover:underline"
+          >
+            Logout
+          </button>
+        </div>
 
         <TabsContent value="swap" className="w-full">
           <SwapInterface
@@ -82,21 +98,13 @@ export default function Dashboard() {
 
         <TabsContent value="leaderboard">
           <LeaderboardTab />
-        </TabsContent>
-
-        <TabsContent value="profile">
+        </TabsContent>        <TabsContent value="profile">
           <div className="rounded-md border p-4">
             <h3 className="text-lg font-medium mb-4">Your Profile</h3>
             <div className="space-y-2">
               <p><span className="font-medium">Username:</span> {user?.username || 'Not set'}</p>
               <p><span className="font-medium">Points:</span> {user?.activityPoints}</p>
               <p><span className="font-medium">Member since:</span> {new Date(user?.createdAt || Date.now()).toLocaleDateString()}</p>
-              <button 
-                onClick={logout}
-                className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
-              >
-                Logout
-              </button>
             </div>
           </div>
         </TabsContent>

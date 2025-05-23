@@ -1,5 +1,10 @@
 import { ethers } from 'ethers';
 import { prisma } from '../utils/prisma';
+import { getGasPrice } from './etherscan';
+import { getTokenPrice } from '../api/prices';
+
+// API configuration
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || '';
 
 // Standard ERC20 ABI for token interactions
 const ERC20_ABI = [
@@ -99,7 +104,7 @@ export async function simulateSwap(
   fromToken: string,
   toToken: string,
   amount: string,
-  slippage = 0.5
+  _slippage = 0.5 // Slippage tham số không được sử dụng trong triển khai hiện tại
 ): Promise<{
   fromAmount: string;
   toAmount: string;
@@ -107,12 +112,7 @@ export async function simulateSwap(
   estimatedGas: string;
 }> {
   try {
-    console.log(slippage);
-    
-    // In a real implementation, this would call a DEX API or smart contract
-    // For this simulation, we'll use a mock implementation
-
-    // Get token prices from database or external API
+    // Get token data from database
     const fromTokenData = await prisma.token.findUnique({
       where: { symbol: fromToken },
     });
@@ -125,17 +125,58 @@ export async function simulateSwap(
       throw new Error('Token not found');
     }
 
-    // Mock price calculation (in real app, would fetch from API)
-    // In a real implementation, use CoinGecko, 1inch, or other price APIs
-    const mockFromPrice = 1000; // Mock price for demonstration
-    const mockToPrice = 50;    // Mock price for demonstration
-
-    const rate = mockToPrice / mockFromPrice;
-    const parsedAmount = parseFloat(amount);
-    const toAmount = (parsedAmount * rate).toFixed(6);
+    // Get real token prices from CoinAPI
+    let fromPrice: number;
+    let toPrice: number;
     
-    // Mock gas estimation
-    const estimatedGas = '0.005'; // In the native token of the chain
+    try {
+      fromPrice = await getTokenPrice(fromToken);
+      toPrice = await getTokenPrice(toToken);
+    } catch (priceError) {
+      console.error('Error fetching token prices, using mock prices:', priceError);
+      // Fall back to mock prices if API call fails
+      fromPrice = (fromToken === 'BTC') ? 50000 : (fromToken === 'ETH') ? 3000 : 100;
+      toPrice = (toToken === 'BTC') ? 50000 : (toToken === 'ETH') ? 3000 : 100;
+    }    const rate = toPrice / fromPrice;
+    const parsedAmount = parseFloat(amount);
+      // Áp dụng slippage cho giá trị chuyển đổi (giá trị tối thiểu có thể chấp nhận)
+    // Slippage 0.5% nghĩa là giá trị có thể giảm tối đa 0.5%
+    const slippageFactor = 1 - (_slippage / 100);
+    const toAmountRaw = parsedAmount * rate;
+    
+    // Tính giá trị tối thiểu có thể chấp nhận (đã áp dụng slippage)
+    // Chúng ta không sử dụng giá trị này trực tiếp trong kết quả nhưng tính toán để
+    // mô phỏng cách mà một giao dịch thực sự sẽ hoạt động
+    const minAcceptableAmount = toAmountRaw * slippageFactor;
+    console.log(`Minimum amount with ${_slippage}% slippage: ${minAcceptableAmount}`);
+    
+    const toAmount = toAmountRaw.toFixed(6);
+    
+    // Get current gas price from network
+    let estimatedGas = '0.005'; // Default fallback
+    
+    // Try to get real gas price from Etherscan API
+    try {
+      if (ETHERSCAN_API_KEY && (fromTokenData.network === 'ETH' || toTokenData.network === 'ETH')) {
+        const gasPrice = await getGasPrice(fromTokenData.network);
+        // Convert from wei to gwei for readability
+        const gasPriceGwei = ethers.utils.formatUnits(gasPrice, 'gwei');
+        
+        // Estimate gas units for a swap (this is a rough estimate)
+        const estimatedGasUnits = 150000; // Typical gas for a swap
+        
+        // Calculate estimated gas cost in ETH
+        const gasEth = ethers.utils.formatEther(
+          ethers.BigNumber.from(gasPrice).mul(estimatedGasUnits)
+        );
+        
+        estimatedGas = gasEth;
+        console.log(`Estimated gas for swap: ${gasEth} ETH (${gasPriceGwei} Gwei)`);
+      }
+    } catch (gasError) {
+      console.error('Error fetching gas price:', gasError);
+      // Keep using the default value
+    }
 
     return {
       fromAmount: amount,

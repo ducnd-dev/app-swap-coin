@@ -1,0 +1,90 @@
+/* Mobile-optimized chart styles */
+
+/* Base chart container styles */
+.chart-container {
+  width: 100%;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Chart height responsiveness */
+.chart-wrapper {
+  height: 250px;
+}
+
+/* Legend styling for better touch area */
+.recharts-legend-item {
+  padding: 6px;
+}
+
+.recharts-default-tooltip {
+  border-radius: 8px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 640px) {
+  .chart-actions {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .chart-actions .time-periods {
+    margin-top: 8px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  /* Prevent text from being too small on mobile */
+  .recharts-text {
+    font-size: 10px !important;
+  }
+  
+  .market-data-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Medium screens and up */
+@media (min-width: 768px) {
+  .chart-wrapper {
+    height: 350px;
+  }
+  
+  .chart-actions {
+    flex-direction: row;
+  }
+}
+
+/* Larger screens */
+@media (min-width: 1024px) {
+  .chart-wrapper {
+    height: 400px;
+  }
+}
+
+/* Touch-specific optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .recharts-dot {
+    r: 6 !important; /* Larger dots for touch devices */
+  }
+  
+  .recharts-tooltip-cursor {
+    stroke-width: 2 !important; /* Thicker cursor line */
+  }
+}
+
+/* Dark mode adjustments */
+.dark .recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .recharts-cartesian-axis-line {
+  stroke: rgba(255, 255, 255, 0.3) !important;
+}
+
+.dark .recharts-text {
+  fill: rgba(255, 255, 255, 0.7) !important;
+}
