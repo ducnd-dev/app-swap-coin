@@ -128,8 +128,7 @@ export async function simulateSwap(
     // Get real token prices from CoinAPI
     let fromPrice: number;
     let toPrice: number;
-    
-    try {
+      try {
       fromPrice = await getTokenPrice(fromToken);
       toPrice = await getTokenPrice(toToken);
     } catch (priceError) {
@@ -137,16 +136,24 @@ export async function simulateSwap(
       // Fall back to mock prices if API call fails
       fromPrice = (fromToken === 'BTC') ? 50000 : (fromToken === 'ETH') ? 3000 : 100;
       toPrice = (toToken === 'BTC') ? 50000 : (toToken === 'ETH') ? 3000 : 100;
-    }    const rate = toPrice / fromPrice;
+    }
+      // Calculate the rate based on token prices:
+    // If fromToken is ETH ($3000) and toToken is USDC ($1),
+    // then 1 ETH should give us 3000 USDC, so rate = fromPrice/toPrice
+    // This gives the correct ratio for converting fromToken to toToken
+    const rate = fromPrice / toPrice;
     const parsedAmount = parseFloat(amount);
-      // Áp dụng slippage cho giá trị chuyển đổi (giá trị tối thiểu có thể chấp nhận)
-    // Slippage 0.5% nghĩa là giá trị có thể giảm tối đa 0.5%
-    const slippageFactor = 1 - (_slippage / 100);
+    // Apply slippage to conversion value (minimum acceptable value)
+  // Slippage of 0.5% means value can decrease by maximum 0.5%
+  const slippageFactor = 1 - (_slippage / 100);
+    
+    // Calculate how many target tokens the user will receive
+    // For example: if swapping 0.5 ETH to USDC, and rate is 3000, then:
+    // toAmountRaw = 0.5 * 3000 = 1500 USDC
     const toAmountRaw = parsedAmount * rate;
     
-    // Tính giá trị tối thiểu có thể chấp nhận (đã áp dụng slippage)
-    // Chúng ta không sử dụng giá trị này trực tiếp trong kết quả nhưng tính toán để
-    // mô phỏng cách mà một giao dịch thực sự sẽ hoạt động
+    // Calculate minimum acceptable amount considering slippage
+    // For a 0.5% slippage with 1500 USDC, minimum would be 1492.5 USDC
     const minAcceptableAmount = toAmountRaw * slippageFactor;
     console.log(`Minimum amount with ${_slippage}% slippage: ${minAcceptableAmount}`);
     

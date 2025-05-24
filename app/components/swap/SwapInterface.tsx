@@ -383,13 +383,29 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   // Extract tokens safely
   const safeFromTokenSymbol = fromToken?.symbol || 'Select';
   const safeToTokenSymbol = toToken?.symbol || 'Select';
-  
-  // Function to safely display token exchange rate
+    // Function to safely display token exchange rate
   const getExchangeRateDisplay = () => {
     if (fromToken && toToken && fromAmount && toAmount && parseFloat(fromAmount) > 0) {
       try {
-        const rate = (parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6);
-        return `1 ${safeFromTokenSymbol} ≈ ${rate} ${safeToTokenSymbol}`;
+        // Simply calculate the exchange rate by dividing the target amount by the source amount
+        // This should reflect the rate from the simulateSwap function in ethereum.ts
+        // For example: If 0.5 ETH gives us 1500 USDC, then 1 ETH = 3000 USDC
+        const rate = parseFloat(toAmount) / parseFloat(fromAmount);
+        
+        // Format based on the size of the rate (avoid too many decimals for large rates)
+        let formattedRate: string;
+        if (rate >= 1000) {
+          // For large rates like ETH/USDC (around 3000), show fewer decimals
+          formattedRate = rate.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        } else if (rate >= 1) {
+          // For medium rates, show more precision
+          formattedRate = rate.toLocaleString(undefined, { maximumFractionDigits: 4 });
+        } else {
+          // For small rates (like USDC/ETH which is around 0.00033), show more decimals
+          formattedRate = rate.toLocaleString(undefined, { maximumFractionDigits: 6 });
+        }
+        
+        return `1 ${safeFromTokenSymbol} ≈ ${formattedRate} ${safeToTokenSymbol}`;
       } catch (error) {
         console.error('Error calculating exchange rate:', error);
         return `1 ${safeFromTokenSymbol} ≈ ? ${safeToTokenSymbol}`;
