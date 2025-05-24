@@ -14,14 +14,17 @@ export default function LeaderboardTab() {
     isLoadingUserRanking,
     refreshLeaderboards 
   } = useLeaderboard();
-
   // Format username for display
   const formatUsername = (user: LeaderboardUser) => {
-    return user.username || user.firstName || `User${user.telegramId}`;
+    if (!user) return 'Unknown User';
+    return user.username || user.firstName || `User${user.telegramId || 'Unknown'}`;
   };
-
   // Get medal for top 3 ranks
   const getRankMedal = (rank: number) => {
+    if (rank === undefined || rank === null) {
+      return <span className="w-5 text-center">-</span>;
+    }
+    
     switch (rank) {
       case 1:
         return <Trophy size={18} className="text-yellow-500" />;
@@ -58,18 +61,17 @@ export default function LeaderboardTab() {
           </div>
         ) : userRanking ? (
           <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-blue-100">
-            <div className="flex justify-between items-start">
-              <div>
+            <div className="flex justify-between items-start">              <div>
                 <div className="text-sm text-gray-500">Current Rank</div>
-                <div className="text-2xl font-bold">#{userRanking.rank}</div>
+                <div className="text-2xl font-bold">#{userRanking?.rank || 'N/A'}</div>
                 <div className="text-sm mt-1">
-                  Top {userRanking.percentile ? userRanking.percentile.toFixed(1) : '10'}% 
-                  of all users ({userRanking.totalUsers} total)
+                  Top {userRanking?.percentile ? userRanking.percentile.toFixed(1) : '10'}% 
+                  of all users ({userRanking?.totalUsers || 0} total)
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-500">Points</div>
-                <div className="text-2xl font-bold">{userRanking.points}</div>
+                <div className="text-2xl font-bold">{userRanking?.points || 0}</div>
               </div>
             </div>
           </div>
@@ -104,8 +106,7 @@ export default function LeaderboardTab() {
               <div className="text-center py-8 text-gray-500">
                 No data available for this week yet.
               </div>
-            ) : (
-              weeklyLeaderboard.map((leaderboardUser) => (
+            ) : (              weeklyLeaderboard.map((leaderboardUser) => (
                 <div key={leaderboardUser.telegramId} className="flex items-center p-3 rounded-md hover:bg-gray-50">
                   <div className="w-6 text-center mr-3">
                     {getRankMedal(leaderboardUser.rank)}
@@ -113,11 +114,11 @@ export default function LeaderboardTab() {
                   <div className="flex-1">
                     <div className="font-medium">{formatUsername(leaderboardUser)}</div>
                     <div className="text-xs text-gray-500">
-                      {leaderboardUser.swapVolume && `$${leaderboardUser.swapVolume} volume`} 
-                      {leaderboardUser.swapCount && ` • ${leaderboardUser.swapCount} swaps`}
+                      {leaderboardUser.swapVolume ? `$${leaderboardUser.swapVolume} volume` : ''} 
+                      {leaderboardUser.swapCount ? ` • ${leaderboardUser.swapCount} swaps` : ''}
                     </div>
                   </div>
-                  <div className="font-medium">{leaderboardUser.points} pts</div>
+                  <div className="font-medium">{leaderboardUser.points || 0} pts</div>
                 </div>
               ))
             )}
@@ -147,8 +148,7 @@ export default function LeaderboardTab() {
               <div className="text-center py-8 text-gray-500">
                 No data available for this month yet.
               </div>
-            ) : (
-              monthlyLeaderboard.map((leaderboardUser) => (
+            ) : (              monthlyLeaderboard.map((leaderboardUser) => (
                 <div key={leaderboardUser.telegramId} className="flex items-center p-3 rounded-md hover:bg-gray-50">
                   <div className="w-6 text-center mr-3">
                     {getRankMedal(leaderboardUser.rank)}
@@ -156,11 +156,11 @@ export default function LeaderboardTab() {
                   <div className="flex-1">
                     <div className="font-medium">{formatUsername(leaderboardUser)}</div>
                     <div className="text-xs text-gray-500">
-                      {leaderboardUser.swapVolume && `$${leaderboardUser.swapVolume} volume`} 
-                      {leaderboardUser.swapCount && ` • ${leaderboardUser.swapCount} swaps`}
+                      {leaderboardUser.swapVolume ? `$${leaderboardUser.swapVolume} volume` : ''} 
+                      {leaderboardUser.swapCount ? ` • ${leaderboardUser.swapCount} swaps` : ''}
                     </div>
                   </div>
-                  <div className="font-medium">{leaderboardUser.points} pts</div>
+                  <div className="font-medium">{leaderboardUser.points || 0} pts</div>
                 </div>
               ))
             )}

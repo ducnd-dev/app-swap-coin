@@ -166,57 +166,58 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       setFilteredTokens(tokens);
     }
   }, [searchTokens, tokens]);
-
   return (
-    <div className="rounded-lg border p-4">
+    <div className="bg-gray-800 bg-opacity-70 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-blue-500/30">
+      <h1 className="text-2xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300 pb-2">
+        Swap Tokens
+      </h1>
+
       {/* Wallet warning if no wallet selected */}
       {!wallet && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md flex items-start">
+        <div className="mb-4 p-3 bg-gray-900/80 border border-yellow-500/50 rounded-md flex items-start">
           <AlertCircle size={18} className="text-yellow-500 mr-2 mt-0.5" />
-          <p className="text-sm text-yellow-700">
+          <p className="text-sm text-yellow-400">
             Please select or add a wallet to perform swaps.
           </p>
         </div>
-      )}
-
-      {/* From Token Section */}
+      )}      {/* From Token Section */}
       <div className="mb-2">
         <div className="flex justify-between text-sm mb-2">
-          <div>From</div>
+          <div className="text-blue-300 font-medium">From</div>
           <div>
             {wallet && fromToken && (
-              <span>Balance: {wallet.address.substring(0, 6)}...</span>
+              <span className="text-gray-300">Balance: {wallet.address.substring(0, 6)}...</span>
             )}
           </div>
         </div>
-        <div className="flex items-center p-4 border rounded-lg">
+        <div className="flex items-center p-4 bg-gray-800 border border-blue-500/30 rounded-lg shadow-lg">
           <button
-            className="flex items-center min-w-[120px]"
+            className="flex items-center min-w-[120px] hover:bg-gray-700/50 p-2 rounded-md transition-all duration-200"
             onClick={() => setIsFromTokenSelectOpen(true)}
           >
             {fromToken ? (
               <div className="flex items-center">
                 {fromToken.icon ? (
                   <Image 
-                    src={fromToken.icon} 
+                    src={fromToken.icon}
                     alt={fromToken.symbol} 
                     className="w-6 h-6 rounded-full mr-2" 
                     width={24}
                     height={24}
                   />
                 ) : (
-                  <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center mr-2">
+                  <div className="w-6 h-6 bg-gray-700 text-blue-300 rounded-full flex items-center justify-center mr-2">
                     {fromToken.symbol.substring(0, 1)}
                   </div>
                 )}
-                <span className="font-medium">{fromToken.symbol}</span>
-                <ChevronDown size={16} className="ml-1" />
+                <span className="font-medium text-white">{fromToken.symbol}</span>
+                <ChevronDown size={16} className="ml-1 text-blue-300" />
               </div>
             ) : (
               <div className="flex items-center">
-                <div className="w-6 h-6 bg-gray-100 rounded-full mr-2"></div>
-                <span className="font-medium">Select</span>
-                <ChevronDown size={16} className="ml-1" />
+                <div className="w-6 h-6 bg-gray-700 rounded-full mr-2"></div>
+                <span className="font-medium text-gray-300">Select</span>
+                <ChevronDown size={16} className="ml-1 text-blue-300" />
               </div>
             )}
           </button>
@@ -227,34 +228,32 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             onChange={(e) => setFromAmount(e.target.value)}
             placeholder="0.0"
             disabled={!fromToken || !wallet}
-            className="flex-1 ml-4 text-right text-lg focus:outline-none"
+            className="flex-1 ml-4 text-right text-lg bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-md"
           />
         </div>
-      </div>
-
-      {/* Swap Button */}
+      </div>      {/* Swap Button */}
       <div className="flex justify-center -my-3 z-10 relative">
         <button
           onClick={swapTokens}
-          className="bg-white rounded-full p-2 border shadow-sm hover:shadow"
+          className="bg-gray-700 text-blue-400 rounded-full p-2.5 border border-blue-500/40 shadow-md shadow-blue-500/20 hover:shadow-blue-500/40 hover:bg-gray-600 transition-all duration-200"
         >
-          <ArrowDown size={16} />
+          <ArrowDown size={18} />
         </button>
       </div>
 
       {/* To Token Section */}
       <div className="mb-4">
         <div className="flex justify-between text-sm mb-2">
-          <div>To</div>
+          <div className="text-purple-300 font-medium">To</div>
           <div>
             {wallet && toToken && (
-              <span>Balance: 0</span>
+              <span className="text-gray-300">Balance: 0</span>
             )}
           </div>
         </div>
-        <div className="flex items-center p-4 border rounded-lg">
+        <div className="flex items-center p-4 bg-gray-800 border border-purple-500/30 rounded-lg shadow-lg">
           <button
-            className="flex items-center min-w-[120px]"
+            className="flex items-center min-w-[120px] hover:bg-gray-700/50 p-2 rounded-md transition-all duration-200"
             onClick={() => setIsToTokenSelectOpen(true)}
           >
             {toToken ? (
@@ -268,18 +267,18 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
                     height={24}
                   />
                 ) : (
-                  <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center mr-2">
+                  <div className="w-6 h-6 bg-gray-700 text-purple-300 rounded-full flex items-center justify-center mr-2">
                     {toToken.symbol.substring(0, 1)}
                   </div>
                 )}
-                <span className="font-medium">{toToken.symbol}</span>
-                <ChevronDown size={16} className="ml-1" />
+                <span className="font-medium text-white">{toToken.symbol}</span>
+                <ChevronDown size={16} className="ml-1 text-purple-300" />
               </div>
             ) : (
               <div className="flex items-center">
-                <div className="w-6 h-6 bg-gray-100 rounded-full mr-2"></div>
-                <span className="font-medium">Select</span>
-                <ChevronDown size={16} className="ml-1" />
+                <div className="w-6 h-6 bg-gray-700 rounded-full mr-2"></div>
+                <span className="font-medium text-gray-300">Select</span>
+                <ChevronDown size={16} className="ml-1 text-purple-300" />
               </div>
             )}
           </button>
@@ -287,7 +286,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
           <div className="flex-1 ml-4 text-right">
             {isQuoteLoading ? (
               <div className="flex justify-end items-center">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2"></div>
                 <span className="text-gray-400">Loading...</span>
               </div>
             ) : (
@@ -296,25 +295,23 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
                 value={toAmount}
                 readOnly
                 placeholder="0.0"
-                className="text-right text-lg focus:outline-none w-full"
+                className="text-right text-lg bg-transparent text-white focus:outline-none w-full"
               />
             )}
           </div>
         </div>
-      </div>
-
-      {/* Settings and info */}
-      <div className="flex justify-between items-center mb-4">
+      </div>      {/* Settings and info */}
+      <div className="flex justify-between items-center mb-4 p-3 bg-gray-800/70 rounded-lg border border-gray-700">
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className="flex items-center px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
+          className="flex items-center px-3 py-1.5 text-sm text-blue-300 hover:bg-gray-700 rounded-md transition-all duration-200"
         >
-          <Settings size={15} className="mr-1" />
+          <Settings size={15} className="mr-2" />
           <span>Slippage: {slippage}%</span>
         </button>
         
         {fromToken && toToken && fromAmount && toAmount && (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-gray-300 bg-gray-700/70 py-1.5 px-3 rounded-md">
             1 {fromToken.symbol} ≈ {parseFloat(toAmount) / parseFloat(fromAmount)} {toToken.symbol}
           </span>
         )}
@@ -322,9 +319,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
 
       {/* Error display */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start">
-          <AlertCircle size={18} className="text-red-500 mr-2 mt-0.5" />
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="mb-4 p-3 bg-gray-800 border border-red-500/50 rounded-md flex items-start">
+          <AlertCircle size={18} className="text-red-400 mr-2 mt-0.5" />
+          <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
 
@@ -332,10 +329,10 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       <button
         onClick={executeSwap}
         disabled={swapButtonState === 'disabled' || isLoading}
-        className={`w-full py-3 px-4 rounded-lg font-medium ${
+        className={`w-full py-3 px-4 rounded-lg font-medium shadow-lg ${
           swapButtonState === 'disabled' || isLoading
-            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-            : 'bg-blue-500 hover:bg-blue-600 text-white'
+            ? 'bg-gray-700/70 text-gray-400 cursor-not-allowed'
+            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transition-all duration-200'
         }`}
       >
         {isLoading ? (
@@ -345,15 +342,15 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         ) : swapButtonState === 'disabled' ? (
           'Enter an amount'
         ) : (
-          'Swap'
+          'Swap Tokens'
         )}
-      </button>
-
-      {/* Token Selection Dialog for "From" */}
+      </button>      {/* Token Selection Dialog for "From" */}
       <Dialog open={isFromTokenSelectOpen} onOpenChange={setIsFromTokenSelectOpen}>
-        <DialogContent>
+        <DialogContent className="bg-gray-800 bg-opacity-90 backdrop-blur-lg border border-blue-500/30 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Select a token</DialogTitle>
+            <DialogTitle className="text-xl font-semibold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
+              Select a token
+            </DialogTitle>
           </DialogHeader>
           
           <div className="py-2">
@@ -362,14 +359,14 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
               placeholder="Search tokens..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 mb-3"
+              className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent mb-3"
             />
             
-            <div className="max-h-[300px] overflow-y-auto">
+            <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 pr-1">
               {filteredTokens.map((token) => (
                 <button
                   key={token.id}
-                  className="w-full text-left p-3 hover:bg-gray-50 flex items-center"
+                  className="w-full text-left p-3 hover:bg-gray-700/70 rounded-md transition-all duration-200 flex items-center my-1 border border-transparent hover:border-blue-500/20"
                   onClick={() => {
                     setFromToken(token);
                     setIsFromTokenSelectOpen(false);
@@ -385,18 +382,18 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
                       height={32}
                     />
                   ) : (
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                    <div className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center mr-3">
                       {token.symbol.substring(0, 1)}
                     </div>
                   )}
                   <div>
-                    <div className="font-medium">{token.symbol}</div>
-                    <div className="text-xs text-gray-500">{token.name}</div>
+                    <div className="font-medium text-white">{token.symbol}</div>
+                    <div className="text-xs text-gray-400">{token.name}</div>
                   </div>
                   {tokenPrices[token.id] && (
                     <div className="ml-auto text-right">
-                      <div>${tokenPrices[token.id].price.toFixed(2)}</div>
-                      <div className={`text-xs ${tokenPrices[token.id].change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <div className="text-white">${tokenPrices[token.id].price.toFixed(2)}</div>
+                      <div className={`text-xs ${tokenPrices[token.id].change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {tokenPrices[token.id].change24h >= 0 ? '+' : ''}{tokenPrices[token.id].change24h.toFixed(2)}%
                       </div>
                     </div>
@@ -406,13 +403,13 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             </div>
           </div>
         </DialogContent>
-      </Dialog>
-
-      {/* Token Selection Dialog for "To" */}
+      </Dialog>      {/* Token Selection Dialog for "To" */}
       <Dialog open={isToTokenSelectOpen} onOpenChange={setIsToTokenSelectOpen}>
-        <DialogContent>
+        <DialogContent className="bg-gray-800 bg-opacity-90 backdrop-blur-lg border border-purple-500/30 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Select a token</DialogTitle>
+            <DialogTitle className="text-xl font-semibold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
+              Select a token
+            </DialogTitle>
           </DialogHeader>
           
           <div className="py-2">
@@ -421,14 +418,14 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
               placeholder="Search tokens..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 mb-3"
+              className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent mb-3"
             />
             
-            <div className="max-h-[300px] overflow-y-auto">
+            <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 pr-1">
               {filteredTokens.map((token) => (
                 <button
                   key={token.id}
-                  className="w-full text-left p-3 hover:bg-gray-50 flex items-center"
+                  className="w-full text-left p-3 hover:bg-gray-700/70 rounded-md transition-all duration-200 flex items-center my-1 border border-transparent hover:border-purple-500/20"
                   onClick={() => {
                     setToToken(token);
                     setIsToTokenSelectOpen(false);
@@ -444,18 +441,18 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
                       height={32}
                     />
                   ) : (
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                    <div className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center mr-3">
                       {token.symbol.substring(0, 1)}
                     </div>
                   )}
                   <div>
-                    <div className="font-medium">{token.symbol}</div>
-                    <div className="text-xs text-gray-500">{token.name}</div>
+                    <div className="font-medium text-white">{token.symbol}</div>
+                    <div className="text-xs text-gray-400">{token.name}</div>
                   </div>
                   {tokenPrices[token.id] && (
                     <div className="ml-auto text-right">
-                      <div>${tokenPrices[token.id].price.toFixed(2)}</div>
-                      <div className={`text-xs ${tokenPrices[token.id].change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <div className="text-white">${tokenPrices[token.id].price.toFixed(2)}</div>
+                      <div className={`text-xs ${tokenPrices[token.id].change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {tokenPrices[token.id].change24h >= 0 ? '+' : ''}{tokenPrices[token.id].change24h.toFixed(2)}%
                       </div>
                     </div>
@@ -465,47 +462,63 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             </div>
           </div>
         </DialogContent>
-      </Dialog>
-
-      {/* Settings Dialog */}
+      </Dialog>      {/* Settings Dialog */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent>
+        <DialogContent className="bg-gray-800 bg-opacity-90 backdrop-blur-lg border border-blue-500/30 shadow-xl">
           <DialogHeader>
-            <DialogTitle>Transaction Settings</DialogTitle>
+            <DialogTitle className="text-xl font-semibold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
+              Transaction Settings
+            </DialogTitle>
           </DialogHeader>
           
           <div className="py-4">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-blue-300">
               Slippage Tolerance
             </label>
             <div className="flex space-x-2 mb-4">
               <button
-                className={`py-2 px-4 rounded-md ${slippage === 0.1 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                className={`py-2 px-4 rounded-md transition-all duration-200 ${
+                  slippage === 0.1 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/20' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
                 onClick={() => setSlippage(0.1)}
               >
                 0.1%
               </button>
               <button
-                className={`py-2 px-4 rounded-md ${slippage === 0.5 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                className={`py-2 px-4 rounded-md transition-all duration-200 ${
+                  slippage === 0.5 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/20' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
                 onClick={() => setSlippage(0.5)}
               >
                 0.5%
               </button>
               <button
-                className={`py-2 px-4 rounded-md ${slippage === 1 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                className={`py-2 px-4 rounded-md transition-all duration-200 ${
+                  slippage === 1 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/20' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
                 onClick={() => setSlippage(1)}
               >
                 1%
               </button>
               <button
-                className={`py-2 px-4 rounded-md ${slippage === 2 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                className={`py-2 px-4 rounded-md transition-all duration-200 ${
+                  slippage === 2 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/20' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
                 onClick={() => setSlippage(2)}
               >
                 2%
               </button>
             </div>
             
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-blue-300">
               Custom Slippage
             </label>
             <div className="relative">
@@ -518,13 +531,13 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
                     setSlippage(value);
                   }
                 }}
-                className="w-full pl-3 pr-8 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-3 pr-8 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent"
               />
-              <span className="absolute right-3 top-2">%</span>
+              <span className="absolute right-3 top-2 text-gray-300">%</span>
             </div>
             
-            <div className="flex items-start mt-4 text-sm text-gray-500">
-              <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start mt-4 text-sm text-blue-200 p-3 bg-blue-900/30 border border-blue-500/20 rounded-lg">
+              <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0 text-blue-300" />
               <p>
                 Higher slippage increases your chances of a successful transaction but may result in less favorable rates.
               </p>
@@ -535,7 +548,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             <button
               type="button"
               onClick={() => setIsSettingsOpen(false)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md transition-all duration-200 font-medium shadow-lg shadow-blue-500/20"
             >
               Save Settings
             </button>
