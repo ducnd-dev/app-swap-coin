@@ -221,14 +221,13 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
               </div>
             )}
           </button>
-          
-          <input
+            <input
             type="number"
             value={fromAmount}
             onChange={(e) => setFromAmount(e.target.value)}
             placeholder="0.0"
             disabled={!fromToken || !wallet}
-            className="flex-1 ml-4 text-right text-lg bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-md"
+            className="flex-1 ml-4 text-right text-lg bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-md max-w-[60%] overflow-hidden truncate"
           />
         </div>
       </div>      {/* Swap Button */}
@@ -289,13 +288,12 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
                 <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2"></div>
                 <span className="text-gray-400">Loading...</span>
               </div>
-            ) : (
-              <input
+            ) : (              <input
                 type="text"
                 value={toAmount}
                 readOnly
                 placeholder="0.0"
-                className="text-right text-lg bg-transparent text-white focus:outline-none w-full"
+                className="text-right text-lg bg-transparent text-white focus:outline-none w-full max-w-full overflow-hidden truncate"
               />
             )}
           </div>

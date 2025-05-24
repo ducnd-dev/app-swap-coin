@@ -119,7 +119,7 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
                       Default
                     </span>
                   )}
-                  <span className="font-medium">{wallet.name || 'My Wallet'}</span>
+                  <span className="font-medium text-transparent bg-gradient-to-r from-blue-300 to-purple-300">{wallet.name || 'My Wallet'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   {!wallet.isDefault && (
