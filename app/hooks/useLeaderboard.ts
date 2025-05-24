@@ -28,45 +28,68 @@ export const useLeaderboard = () => {
   const [isLoadingMonthly, setIsLoadingMonthly] = useState<boolean>(true);
   const [userRanking, setUserRanking] = useState<UserRanking | null>(null);
   const [isLoadingUserRanking, setIsLoadingUserRanking] = useState<boolean>(true);
-
   const fetchWeeklyLeaderboard = useCallback(async () => {
     try {
       setIsLoadingWeekly(true);
       const response = await axiosClient.get('/api/leaderboard/weekly');
-      setWeeklyLeaderboard(response.data.users);
-      return response.data.users;
+      if (response.data && Array.isArray(response.data.users)) {
+        setWeeklyLeaderboard(response.data.users);
+        return response.data.users;
+      } else {
+        console.error('Invalid weekly leaderboard data format:', response.data);
+        setWeeklyLeaderboard([]);
+        return [];
+      }
     } catch (error) {
       console.error('Error fetching weekly leaderboard:', error);
       toast.error('Failed to load weekly leaderboard');
+      setWeeklyLeaderboard([]);
       return [];
     } finally {
       setIsLoadingWeekly(false);
     }
   }, []);
-
   const fetchMonthlyLeaderboard = useCallback(async () => {
     try {
       setIsLoadingMonthly(true);
       const response = await axiosClient.get('/api/leaderboard/monthly');
-      setMonthlyLeaderboard(response.data.users);
-      return response.data.users;
+      if (response.data && Array.isArray(response.data.users)) {
+        setMonthlyLeaderboard(response.data.users);
+        return response.data.users;
+      } else {
+        console.error('Invalid monthly leaderboard data format:', response.data);
+        setMonthlyLeaderboard([]);
+        return [];
+      }
     } catch (error) {
       console.error('Error fetching monthly leaderboard:', error);
       toast.error('Failed to load monthly leaderboard');
+      setMonthlyLeaderboard([]);
       return [];
     } finally {
       setIsLoadingMonthly(false);
     }
   }, []);
-
   const fetchUserRanking = useCallback(async () => {
     try {
       setIsLoadingUserRanking(true);
       const response = await axiosClient.get('/api/users/me/points');
-      setUserRanking(response.data);
-      return response.data;
+      if (response.data && typeof response.data === 'object') {
+        setUserRanking({
+          points: response.data.points || 0,
+          rank: response.data.rank || 0,
+          totalUsers: response.data.totalUsers || 0,
+          percentile: response.data.percentile || null
+        });
+        return response.data;
+      } else {
+        console.error('Invalid user ranking data format:', response.data);
+        setUserRanking(null);
+        return null;
+      }
     } catch (error) {
       console.error('Error fetching user ranking:', error);
+      setUserRanking(null);
       return null;
     } finally {
       setIsLoadingUserRanking(false);
