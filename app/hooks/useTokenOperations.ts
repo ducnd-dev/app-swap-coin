@@ -71,9 +71,7 @@ export const useTokenOperations = () => {
       console.error('Error searching tokens:', error);
       return [];
     }
-  }, []);
-
-  // Get swap quote
+  }, []);  // Get swap quote
   const getSwapQuote = useCallback(async (
     fromTokenId: string, 
     toTokenId: string, 
@@ -81,10 +79,12 @@ export const useTokenOperations = () => {
     slippage: number = 0.5
   ) => {
     try {
+      // We need to pass token IDs - the API needs to be updated to handle IDs
+      // This is a workaround until the API is fixed
       const response = await axiosClient.get('/api/swap/quote', {
         params: {
-          fromTokenId,
-          toTokenId,
+          fromToken: fromTokenId,
+          toToken: toTokenId,
           amount,
           slippage
         }

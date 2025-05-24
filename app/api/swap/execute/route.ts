@@ -35,14 +35,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
     
-    // Check if tokens exist
-    const fromTokenData = await prisma.token.findUnique({
+    console.log('Execute swap parameters:', { fromToken, toToken, fromAmount, walletAddress, slippage });
+    
+    // Check if fromToken and toToken are IDs or symbols
+    let fromTokenData = null;
+    let toTokenData = null;
+    
+    // Try to find by symbol first
+    fromTokenData = await prisma.token.findUnique({
       where: { symbol: fromToken },
     });
     
-    const toTokenData = await prisma.token.findUnique({
+    // If not found by symbol, try to find by ID
+    if (!fromTokenData) {
+      fromTokenData = await prisma.token.findUnique({
+        where: { id: fromToken },
+      });
+    }
+    
+    // Same for toToken
+    toTokenData = await prisma.token.findUnique({
       where: { symbol: toToken },
     });
+    
+    if (!toTokenData) {
+      toTokenData = await prisma.token.findUnique({
+        where: { id: toToken },
+      });
+    }
     
     if (!fromTokenData || !toTokenData) {
       return NextResponse.json(
@@ -50,6 +70,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 404 }
       );
     }
+    
+    // Use symbol for simulation
+    const fromTokenSymbol = fromTokenData.symbol;
+    const toTokenSymbol = toTokenData.symbol;
     
     // Check if the wallet belongs to the user
     const wallet = await prisma.wallet.findFirst({
@@ -69,8 +93,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Simulate or prepare the swap
     try {
       const swapResult = await simulateSwap(
-        fromToken,
-        toToken,
+        fromTokenSymbol,
+        toTokenSymbol,
         fromAmount,
         slippage
       );
@@ -110,26 +134,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             },
           },
         });
-        
-        // Send notification
+          // Send notification
         await sendTransactionNotification(
           user.telegramId,
           transaction.id,
           'SUCCESS',
           {
-            fromToken,
-            toToken,
+            fromToken: fromTokenSymbol,
+            toToken: toTokenSymbol,
             fromAmount,
             toAmount: swapResult.toAmount,
           }
         );
-        
-        return NextResponse.json({
+          return NextResponse.json({
           transaction: {
             id: transaction.id,
             status: 'SUCCESS',
-            fromToken,
-            toToken,
+            fromToken: fromTokenSymbol,
+            toToken: toTokenSymbol,
             fromAmount,
             toAmount: swapResult.toAmount,
             rate: swapResult.rate,
@@ -144,8 +166,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         transaction: {
           id: transaction.id,
           status: 'PENDING',
-          fromToken,
-          toToken,
+          fromToken: fromTokenSymbol,
+          toToken: toTokenSymbol,
           fromAmount,
           toAmount: swapResult.toAmount,
           rate: swapResult.rate,

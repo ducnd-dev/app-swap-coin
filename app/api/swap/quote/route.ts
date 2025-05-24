@@ -31,14 +31,34 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       );
     }
     
-    // Check if tokens exist
-    const fromTokenData = await prisma.token.findUnique({
+    console.log('Quote request parameters:', { fromToken, toToken, amount, slippage });
+    
+    // Check if fromToken and toToken are IDs or symbols
+    let fromTokenData = null;
+    let toTokenData = null;
+    
+    // Try to find by symbol first
+    fromTokenData = await prisma.token.findUnique({
       where: { symbol: fromToken },
     });
     
-    const toTokenData = await prisma.token.findUnique({
+    // If not found by symbol, try to find by ID
+    if (!fromTokenData) {
+      fromTokenData = await prisma.token.findUnique({
+        where: { id: fromToken },
+      });
+    }
+    
+    // Same for toToken
+    toTokenData = await prisma.token.findUnique({
       where: { symbol: toToken },
     });
+    
+    if (!toTokenData) {
+      toTokenData = await prisma.token.findUnique({
+        where: { id: toToken },
+      });
+    }
     
     if (!fromTokenData || !toTokenData) {
       return NextResponse.json(
@@ -47,11 +67,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       );
     }
     
+    // Use symbol for simulation
+    const fromTokenSymbol = fromTokenData.symbol;
+    const toTokenSymbol = toTokenData.symbol;
+    
     // Simulate swap
     try {
       const swapResult = await simulateSwap(
-        fromToken,
-        toToken,
+        fromTokenSymbol,
+        toTokenSymbol,
         amount,
         parseFloat(slippage)
       );
@@ -62,8 +86,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       
       return NextResponse.json({
         quoteId: uuidv4(), // Generate random ID for the quote
-        fromToken,
-        toToken,
+        fromToken: fromTokenSymbol,
+        toToken: toTokenSymbol,
         fromAmount: swapResult.fromAmount,
         toAmount: swapResult.toAmount,
         rate: swapResult.rate,

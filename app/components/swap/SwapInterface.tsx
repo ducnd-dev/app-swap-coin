@@ -119,9 +119,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
     setToToken(temp);
     setFromAmount(toAmount);
     // Quote will be recalculated by the useEffect
-  };
-
-  // Execute swap function
+  };  // Execute swap function
   const executeSwap = async () => {
     if (!fromToken || !toToken || !fromAmount || !toAmount || !wallet) {
       toast.error('Please fill all fields');
@@ -131,12 +129,13 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
     try {
       setIsLoading(true);
       setSwapButtonState('loading');
-      setError(null);      await axiosClient.post('/api/swap/execute', {
-        fromTokenId: fromToken.id,
-        toTokenId: toToken.id,
+      setError(null);      
+      await axiosClient.post('/api/swap/execute', {
+        fromToken: fromToken.symbol,  // API expects symbol, not ID
+        toToken: toToken.symbol,      // API expects symbol, not ID
         fromAmount,
         toAmount,
-        walletId: wallet.id,
+        walletAddress: wallet.address,
         slippage
       });
 
@@ -145,7 +144,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       
       // Reset form
       setFromAmount('');
-      setToAmount('');    } catch (error) {
+      setToAmount('');} catch (error) {
       console.error('Error executing swap:', error);
       const errorMessage = 'Failed to execute swap';
       setError(errorMessage);
@@ -301,8 +300,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             )}
           </div>
         </div>
-      </div>      {/* Settings and info */}
-      <div className="flex justify-between items-center mb-4 p-3 bg-gray-800/70 rounded-lg border border-gray-700">
+      </div>      {/* Settings and info */}      <div className="flex justify-between items-center mb-4 p-3 bg-gray-800/70 rounded-lg border border-gray-700">
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="flex items-center px-3 py-1.5 text-sm text-blue-300 hover:bg-gray-700 rounded-md transition-all duration-200"
@@ -311,9 +309,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
           <span>Slippage: {slippage}%</span>
         </button>
         
-        {fromToken && toToken && fromAmount && toAmount && (
+        {fromToken && toToken && fromAmount && toAmount && parseFloat(fromAmount) > 0 && (
           <span className="text-sm text-gray-300 bg-gray-700/70 py-1.5 px-3 rounded-md">
-            1 {fromToken.symbol} ≈ {parseFloat(toAmount) / parseFloat(fromAmount)} {toToken.symbol}
+            1 {fromToken.symbol} ≈ {(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} {toToken.symbol}
           </span>
         )}
       </div>
