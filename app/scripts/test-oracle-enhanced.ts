@@ -1,6 +1,6 @@
 // Script test nâng cao cho Oracle giá
 import { getTokenPriceFromChainlink as getTokenPriceFromOriginalOracle } from '../lib/blockchain/price-oracle';
-import { getTokenPriceFromChainlink as getTokenPriceFromNewOracle } from '../lib/blockchain/price-oracle-new';
+import { getTokenPriceFromChainlink as getTokenPriceFromNewOracle } from '../lib/blockchain/price-oracle';
 
 // Kiểm tra xem có sử dụng Oracle mới hay không
 const useNewOracle = process.argv.includes('--use-new-oracle');
@@ -100,7 +100,7 @@ async function testEnhancedOraclePrices() {
       console.log(`⏳ Đang lấy giá cho ${symbol}...`);
       const startTime = Date.now();
       
-      const result = await getTokenPriceFromChainlink(symbol);
+      const result = await getTokenPriceFromChainlink(symbol) as TokenPriceResult;
       
       const endTime = Date.now();
       timings[symbol] = endTime - startTime;
