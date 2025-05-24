@@ -68,12 +68,11 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
   const formatAddress = (address: string) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
-
   if (isLoading) {
     return (
-      <div className="border rounded-lg p-4 mb-4 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-1/4 mb-2"></div>
-        <div className="h-10 bg-gray-200 rounded w-full"></div>
+      <div className="border border-gray-700/50 rounded-lg p-4 mb-4 animate-pulse bg-gray-800/50">
+        <div className="h-5 bg-gray-700/70 rounded w-1/4 mb-2"></div>
+        <div className="h-10 bg-gray-700/70 rounded w-full"></div>
       </div>
     );
   }
@@ -81,45 +80,45 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium">Your Wallets</h3>
+        <h3 className="text-sm font-medium text-blue-300">Your Wallets</h3>
         <button 
           onClick={() => setIsAddDialogOpen(true)} 
-          className="text-blue-500 hover:text-blue-600 flex items-center text-sm"
+          className="text-blue-400 hover:text-blue-300 flex items-center text-sm hover:bg-blue-500/10 px-2 py-1 rounded transition-all duration-200 border border-transparent hover:border-blue-500/20"
         >
           <Plus size={16} className="mr-1" /> Add Wallet
         </button>
       </div>
 
       {/* Wallet List */}
-      <div className="space-y-2 max-h-[200px] overflow-y-auto">
-        {wallets.length === 0 ? (
-          <div className="border border-dashed rounded-lg p-4 text-center">
-            <Wallet className="mx-auto mb-2" size={24} />
-            <p className="text-sm text-gray-500">No wallets added yet</p>
+      <div className="space-y-2 max-h-[200px] overflow-y-auto">        {wallets.length === 0 ? (
+          <div className="border border-dashed border-gray-600 rounded-lg p-4 text-center bg-gray-800/50">
+            <Wallet className="mx-auto mb-2 text-blue-400" size={24} />
+            <p className="text-sm text-gray-300">No wallets added yet</p>
             <button
               onClick={() => setIsAddDialogOpen(true)}
-              className="mt-2 text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+              className="mt-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1.5 rounded-md hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-md shadow-blue-500/20"
             >
               Add your first wallet
             </button>
-          </div>
-        ) : (
+          </div>        ) : (
           wallets.map((wallet) => (
             <div 
               key={wallet.id} 
-              className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                selectedWallet?.id === wallet.id ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+              className={`border rounded-lg p-3 cursor-pointer transition-all duration-200 ${
+                selectedWallet?.id === wallet.id 
+                ? 'border-blue-500 bg-gray-800 shadow-md shadow-blue-500/10' 
+                : 'border-gray-700 bg-gray-800/70 hover:bg-gray-700/80 hover:border-blue-500/30'
               }`}
               onClick={() => onWalletChange(wallet)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   {wallet.isDefault && (
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded mr-2">
+                    <span className="bg-blue-900/70 text-blue-300 text-xs px-2 py-0.5 rounded mr-2 border border-blue-500/30">
                       Default
                     </span>
                   )}
-                  <span className="font-medium text-blue-800">{wallet.name || 'My Wallet'}</span>
+                  <span className="font-medium text-white">{wallet.name || 'My Wallet'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   {!wallet.isDefault && (
@@ -128,7 +127,7 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
                         e.stopPropagation();
                         setWalletAsDefault(wallet);
                       }}
-                      className="text-xs text-gray-500 hover:text-blue-500"
+                      className="text-xs text-gray-400 hover:text-blue-300 px-1.5 py-0.5 rounded hover:bg-blue-500/10 transition-all duration-200"
                     >
                       Set Default
                     </button>
@@ -138,7 +137,7 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
                       e.stopPropagation();
                       deleteWallet(wallet);
                     }}
-                    className="text-xs text-gray-500 hover:text-red-500"
+                    className="text-xs text-gray-400 hover:text-red-300 px-1.5 py-0.5 rounded hover:bg-red-500/10 transition-all duration-200"
                   >
                     Remove
                   </button>
@@ -150,23 +149,21 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
                   wallet.type === 'BSC' ? 'bg-yellow-500' : 
                   wallet.type === 'TON' ? 'bg-sky-500' : 'bg-gray-500'
                 }`}></div>
-                <span className="text-xs text-gray-500">{formatAddress(wallet.address)}</span>
+                <span className="text-xs text-gray-300">{formatAddress(wallet.address)}</span>
                 <span className="text-xs ml-1 text-gray-400">({wallet.type})</span>
               </div>
             </div>
           ))
         )}
-      </div>
-
-      {/* Add Wallet Dialog */}
+      </div>      {/* Add Wallet Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
+        <DialogContent className="border-blue-500/30">
           <DialogHeader>
-            <DialogTitle>Add New Wallet</DialogTitle>
+            <DialogTitle className="text-xl font-semibold pb-1">Add New Wallet</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label htmlFor="wallet-address" className="text-sm font-medium">
+              <label htmlFor="wallet-address" className="text-sm font-medium text-blue-300">
                 Wallet Address
               </label>
               <input
@@ -175,11 +172,11 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
                 value={newWallet.address}
                 onChange={(e) => setNewWallet({...newWallet, address: e.target.value})}
                 placeholder="0x..."
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 placeholder:text-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="wallet-name" className="text-sm font-medium">
+              <label htmlFor="wallet-name" className="text-sm font-medium text-blue-300">
                 Wallet Name (Optional)
               </label>
               <input
@@ -188,18 +185,18 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
                 value={newWallet.name}
                 onChange={(e) => setNewWallet({...newWallet, name: e.target.value})}
                 placeholder="My Trading Wallet"
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 placeholder:text-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="wallet-type" className="text-sm font-medium">
+              <label htmlFor="wallet-type" className="text-sm font-medium text-blue-300">
                 Chain Type
               </label>
               <select
                 id="wallet-type"
                 value={newWallet.type}
                 onChange={(e) => setNewWallet({...newWallet, type: e.target.value})}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50"
               >
                 <option value="ETH">Ethereum</option>
                 <option value="BSC">Binance Smart Chain</option>
@@ -213,14 +210,14 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
             <button
               type="button"
               onClick={() => setIsAddDialogOpen(false)}
-              className="px-4 py-2 border rounded-md mr-2 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-600 bg-gray-700 text-gray-300 rounded-md mr-2 hover:bg-gray-600 hover:text-white transition-all duration-200"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={addWallet}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-md hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-md shadow-blue-500/20"
             >
               Add Wallet
             </button>
