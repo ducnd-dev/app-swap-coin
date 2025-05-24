@@ -5,14 +5,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTokens } from '@/app/contexts/TokenContext';
 import TokenPriceChart from '@/app/components/tokens/TokenPriceChart';
+import BackButton from '@/app/components/ui/back-button';
 
 export default function TokenDetailPage() {
   const { tokens, tokenPrices } = useTokens();
   const [selectedToken, setSelectedToken] = useState<string>('BTC');
   const [days, setDays] = useState<number>(7);
-
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">      <div className="flex items-center justify-between mb-6">
+        <BackButton href="/dashboard" label="Back to Dashboard" variant="primary" />
+      </div>
       <h1 className="text-2xl font-bold mb-6">Token Prices</h1>
       
       <div className="mb-6">

@@ -8,6 +8,7 @@ import { useTokens } from '@/app/contexts/TokenContext';
 import TokenPriceChart from '@/app/components/tokens/TokenPriceChart';
 import LoadingState from '@/app/components/ui/loading-state';
 import { CoinMarketAPI } from '@/app/lib/api/coin-market.fixed';
+import BackButton from '@/app/components/ui/back-button';
 
 interface ExtendedTokenData {
   marketCap?: number;
@@ -106,25 +107,19 @@ export default function TokenDetailPage() {
     };
 
     fetchExtendedTokenData();
-  }, [token, tokenPrice?.change24h]);
-
-  if (!token) {
+  }, [token, tokenPrice?.change24h]);  if (!token) {
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">Token Not Found</h1>
         <p>The token with symbol {symbol} was not found in our database.</p>
-        <Link href="/tokens" className="text-blue-600 hover:underline mt-4 inline-block">
-          ← Back to Token List
-        </Link>
+        <BackButton href="/tokens" label="Back to Token List" variant="primary" />
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link href="/tokens" className="text-blue-600 hover:underline mb-4 inline-block">
-        ← Back to Token List
-      </Link>
+      <BackButton href="/tokens" label="Back to Token List" variant="primary" />
       
       {/* Token Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">

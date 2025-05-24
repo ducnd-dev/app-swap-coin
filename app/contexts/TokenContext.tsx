@@ -38,14 +38,17 @@ const TokenContext = createContext<TokenContextType | undefined>(undefined);
 export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [popularTokens, setPopularTokens] = useState<Token[]>([]);
-  const [tokenPrices, setTokenPrices] = useState<Record<string, TokenPrice>>({});
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [tokenPrices, setTokenPrices] = useState<Record<string, TokenPrice>>({});  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  // Function to fetch price for a specific token
-  const fetchTokenPrice = async (tokenId: string): Promise<number | null> => {
+  
+  // Function to fetch price for a specific token - wrapped in useCallback
+  const fetchTokenPrice = useCallback(async (tokenId: string): Promise<number | null> => {
     try {
+      // Find the token symbol if available in our state
+      const token = tokens.find((t: Token) => t.id === tokenId);
+      
       const response = await axiosClient.get('/api/tokens/price', {
-        params: { tokenId }
+        params: token?.symbol ? { symbol: token.symbol } : { tokenId }
       });
       
       const priceData = response.data;
@@ -56,7 +59,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
         [tokenId]: {
           tokenId,
           price: priceData.price,
-          change24h: priceData.change24h,
+          change24h: priceData.change24h || 0,
           lastUpdated: new Date().toISOString()
         }
       }));
@@ -66,8 +69,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
       console.error(`Error fetching price for token ID ${tokenId}:`, error);
       return null;
     }
-  };
-
+  }, [tokens]); // Adding tokens as a dependency since we use it in the function
   // Function to fetch supported tokens (wrapped in useCallback)
   const fetchTokens = useCallback(async () => {
     try {
@@ -96,7 +98,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);  // Add fetchTokenPrice as a dependency if needed
+  }, [fetchTokenPrice]);  // Added fetchTokenPrice as a dependency since it's used in this callback
 
   // Fetch tokens on initial load
   useEffect(() => {

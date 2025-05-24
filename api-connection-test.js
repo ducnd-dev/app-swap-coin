@@ -17,11 +17,6 @@ async function testEtherscanAPI() {
   
   try {
     const response = await axios.get('https://api.etherscan.io/api', {
-        headers: {
-          'Content-Type': 'application/json',
-        'Content-Encoding': 'br, gzip',
-
-        },
       params: {
         module: 'proxy',
         action: 'eth_gasPrice',
@@ -66,7 +61,10 @@ async function testCoinAPI() {
   try {
     const response = await axios.get('https://rest.coinapi.io/v1/exchangerate/BTC/USD', {
       headers: {
-        'X-CoinAPI-Key': COINAPI_KEY
+        'X-CoinAPI-Key': COINAPI_KEY,
+        'Content-Type': 'application/json',
+        'Content-Encoding': 'br, gzip',
+
       },
       timeout: 10000
     });

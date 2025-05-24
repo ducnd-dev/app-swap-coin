@@ -15,9 +15,8 @@ export const useTokenOperations = () => {
   const [tokenPrices, setTokenPrices] = useState<Record<string, TokenPrice>>({});
   const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(false);
   const [priceError, setPriceError] = useState<string | null>(null);
-
   // Get price for a specific token
-  const getTokenPrice = useCallback(async (tokenId: string): Promise<number | null> => {
+  const getTokenPrice = useCallback(async (tokenId: string, tokenSymbol?: string): Promise<number | null> => {
     try {
       setIsLoadingPrices(true);
       setPriceError(null);
@@ -29,8 +28,9 @@ export const useTokenOperations = () => {
         return cachedPrice.price;
       }
       
+      // Use the token symbol if provided, otherwise use tokenId
       const response = await axiosClient.get('/api/tokens/price', {
-        params: { tokenId }
+        params: tokenSymbol ? { symbol: tokenSymbol } : { tokenId }
       });
       
       const priceData = response.data;
