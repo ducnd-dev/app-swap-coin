@@ -60,11 +60,9 @@ export const useTokenOperations = () => {
   const searchTokens = useCallback(async (query: string): Promise<Token[]> => {
     if (!query || query.trim() === '') {
       return [];
-    }
-
-    try {
+    }    try {
       const response = await axiosClient.get('/api/tokens/search', {
-        params: { query }
+        params: { q: query }
       });
       return response.data.tokens;
     } catch (error) {

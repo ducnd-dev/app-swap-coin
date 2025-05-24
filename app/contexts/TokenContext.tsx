@@ -38,7 +38,8 @@ const TokenContext = createContext<TokenContextType | undefined>(undefined);
 export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [popularTokens, setPopularTokens] = useState<Token[]>([]);
-  const [tokenPrices, setTokenPrices] = useState<Record<string, TokenPrice>>({});  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [tokenPrices, setTokenPrices] = useState<Record<string, TokenPrice>>({});  
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
   // Function to fetch price for a specific token - wrapped in useCallback
@@ -68,15 +69,14 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error(`Error fetching price for token ID ${tokenId}:`, error);
       return null;
-    }
-  }, [tokens]); // Adding tokens as a dependency since we use it in the function
+    }  }, [tokens]); // Adding tokens as a dependency since we use it in the function
+  
   // Function to fetch supported tokens (wrapped in useCallback)
   const fetchTokens = useCallback(async () => {
     try {
       setIsLoading(true);
-      setError(null);
-
-      const response = await axiosClient.get('/api/tokens/search');
+      setError(null);      // Fetch all tokens from the API
+      const response = await axiosClient.get('/api/tokens');
       const fetchedTokens = response.data.tokens;
       setTokens(fetchedTokens);
       
@@ -96,9 +96,8 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
       setError('Failed to load supported tokens');
       toast.error('Failed to load supported tokens');
     } finally {
-      setIsLoading(false);
-    }
-  }, [fetchTokenPrice]);  // Added fetchTokenPrice as a dependency since it's used in this callback
+      setIsLoading(false);    }
+  }, [fetchTokenPrice]); // Added fetchTokenPrice as a dependency since it's used in this callback
 
   // Fetch tokens on initial load
   useEffect(() => {
@@ -106,14 +105,13 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchTokens]);
 
   // Function to search tokens by name or symbol
-  const searchTokens = async (query: string): Promise<Token[]> => {
-    if (!query || query.trim() === '') {
+  const searchTokens = async (query: string): Promise<Token[]> => {    if (!query || query.trim() === '') {
       return tokens;
     }
-
+    
     try {
       const response = await axiosClient.get('/api/tokens/search', {
-        params: { query }
+        params: { q: query }
       });
       return response.data.tokens;
     } catch (error) {
