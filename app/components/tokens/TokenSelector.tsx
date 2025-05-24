@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import useTokenList from '@/app/hooks/useTokenList';
 import { Token } from '@/app/lib/api/oracle-price-api';
+import Image from 'next/image';
 
 interface TokenSelectorProps {
   onTokenSelect: (token: Token) => void;
@@ -66,11 +67,13 @@ export default function TokenSelector({
       >
         {selectedToken ? (
           <>
-            {selectedToken.logoUrl && (
-              <img 
-                src={selectedToken.logoUrl} 
+            {selectedToken.icon && (
+              <Image 
+                src={selectedToken.icon} 
                 alt={selectedToken.symbol}
                 className="w-6 h-6 rounded-full"
+                width={24}
+                height={24}
               />
             )}
             <span className="font-medium">{selectedToken.symbol}</span>
@@ -256,9 +259,12 @@ function TokenOption({ token, onSelect }: { token: Token, onSelect: (token: Toke
       className="w-full text-left p-2 hover:bg-gray-100 rounded-md flex items-center gap-3 transition-colors"
       onClick={() => onSelect(token)}
     >
-      {token.logoUrl ? (
-        <img 
-          src={token.logoUrl} 
+      {token.icon ? (
+        <Image
+
+            width={28}
+            height={28}
+          src={token.icon} 
           alt={token.symbol}
           className="w-7 h-7 rounded-full"
         />

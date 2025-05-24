@@ -30,7 +30,7 @@ export interface Token {
   name: string;
   address?: string;
   decimals: number;
-  logoUrl?: string;
+  icon?: string;
   isPopular?: boolean;
   isStablecoin?: boolean;
   chainId?: number;
