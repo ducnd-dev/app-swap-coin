@@ -221,16 +221,19 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
               </div>
             )}
           </button>
+          
+          <div className="flex-1 ml-4 text-right">
             <input
-            type="number"
-            value={fromAmount}
-            onChange={(e) => setFromAmount(e.target.value)}
-            placeholder="0.0"
-            disabled={!fromToken || !wallet}
-            className="flex-1 ml-4 text-right text-lg bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-md max-w-[60%] overflow-hidden truncate"
-          />
+              type="number"
+              value={fromAmount}
+              onChange={(e) => setFromAmount(e.target.value)}
+              placeholder="0.0"
+              disabled={!fromToken || !wallet}
+              className="text-right text-lg bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-md w-full max-w-full overflow-hidden truncate"
+            />
+          </div>
         </div>
-      </div>      {/* Swap Button */}
+      </div>{/* Swap Button */}
       <div className="flex justify-center -my-3 z-10 relative">
         <button
           onClick={swapTokens}
