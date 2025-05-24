@@ -25,7 +25,7 @@ interface SwapInterfaceProps {
 export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceProps) {
   // Context and hooks
   const { tokens, popularTokens, tokenPrices } = useTokens();
-  const { searchTokens, getSwapQuote } = useTokenOperations();
+  const { searchTokens, getSwapQuote, getTokenPrice } = useTokenOperations();
 
   // State variables
   const [fromToken, setFromToken] = useState<Token | null>(null);
@@ -42,6 +42,8 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   const [toSearchQuery, setToSearchQuery] = useState<string>('');
   const [filteredFromTokens, setFilteredFromTokens] = useState<Token[]>([]);
   const [filteredToTokens, setFilteredToTokens] = useState<Token[]>([]);
+  const [isFromSearchLoading, setIsFromSearchLoading] = useState<boolean>(false);
+  const [isToSearchLoading, setIsToSearchLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [swapButtonState, setSwapButtonState] = useState<'disabled' | 'ready' | 'confirm' | 'loading'>('disabled');
 
@@ -62,35 +64,42 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
     setFilteredFromTokens(tokens);
     setFilteredToTokens(tokens);
   }, [tokens]);
-
-  // Handle from token filtering
+  // Handle from token filtering with debounce
   useEffect(() => {
-    if (fromSearchQuery.trim() === '') {
-      setFilteredFromTokens(tokens);
-    } else {
-      const query = fromSearchQuery.toLowerCase();
-      setFilteredFromTokens(
-        tokens.filter((token) => 
+    const delaySearch = setTimeout(() => {
+      if (fromSearchQuery.trim() === '') {
+        setFilteredFromTokens(tokens);
+      } else {
+        const query = fromSearchQuery.toLowerCase();
+        const localResults = tokens.filter((token) => 
           token.name.toLowerCase().includes(query) || 
           token.symbol.toLowerCase().includes(query)
-        )
-      );
-    }
+        );
+        
+        setFilteredFromTokens(localResults);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(delaySearch);
   }, [fromSearchQuery, tokens]);
 
-  // Handle to token filtering
+  // Handle to token filtering with debounce
   useEffect(() => {
-    if (toSearchQuery.trim() === '') {
-      setFilteredToTokens(tokens);
-    } else {
-      const query = toSearchQuery.toLowerCase();
-      setFilteredToTokens(
-        tokens.filter((token) => 
+    const delaySearch = setTimeout(() => {
+      if (toSearchQuery.trim() === '') {
+        setFilteredToTokens(tokens);
+      } else {
+        const query = toSearchQuery.toLowerCase();
+        const localResults = tokens.filter((token) => 
           token.name.toLowerCase().includes(query) || 
           token.symbol.toLowerCase().includes(query)
-        )
-      );
-    }
+        );
+        
+        setFilteredToTokens(localResults);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(delaySearch);
   }, [toSearchQuery, tokens]);
 
   // Effect for checking if swap can be performed
@@ -181,28 +190,176 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       setIsLoading(false);
       setSwapButtonState('ready');
     }
-  };
-
-  // Search for tokens
+  };  // Use a ref to cache search results
+  const searchCache = useCallback(() => {
+    const cache = new Map<string, Token[]>();
+    
+    return {
+      get: (key: string): Token[] | undefined => cache.get(key.toLowerCase()),
+      set: (key: string, results: Token[]) => {
+        // Only cache if we have results and key is significant
+        if (results.length > 0 && key.length >= 3) {
+          cache.set(key.toLowerCase(), results);
+        }
+        return results;
+      },
+      has: (key: string): boolean => cache.has(key.toLowerCase())
+    };
+  }, [])();
+  
+  // Search for tokens - combining local filtering with API search for better results
   const handleFromSearch = useCallback(async (query: string) => {
     setFromSearchQuery(query);
-    if (query.length >= 2) {
-      const results = await searchTokens(query);
-      setFilteredFromTokens(results);
-    } else {
-      setFilteredFromTokens(tokens);
+    
+    // For longer queries, use the API to get more accurate results
+    if (query.length >= 3) {
+      setIsFromSearchLoading(true);
+      try {
+        // Check cache first
+        if (searchCache.has(query)) {
+          setFilteredFromTokens(searchCache.get(query) || []);
+          setIsFromSearchLoading(false);
+          return;
+        }
+        
+        const results = await searchTokens(query);
+        if (results && results.length > 0) {
+          // Combine API results with local filtered results for better matching
+          const localResults = tokens.filter((token) => 
+            token.name.toLowerCase().includes(query.toLowerCase()) || 
+            token.symbol.toLowerCase().includes(query.toLowerCase())
+          );
+          
+          // Create a Map of IDs to avoid duplicates
+          const uniqueResults = new Map();
+          
+          // Prioritize API results
+          results.forEach(token => uniqueResults.set(token.id, token));
+          
+          // Add local results that aren't already included
+          localResults.forEach(token => {
+            if (!uniqueResults.has(token.id)) {
+              uniqueResults.set(token.id, token);
+            }
+          });
+          
+          const finalResults = Array.from(uniqueResults.values());
+          // Cache the results
+          searchCache.set(query, finalResults);
+          setFilteredFromTokens(finalResults);
+        }
+      } catch (error) {
+        console.error("Error searching tokens:", error);
+        // Fallback to local filtering in case of API error
+        const q = query.toLowerCase();
+        const localResults = tokens.filter((token) => 
+          token.name.toLowerCase().includes(q) || 
+          token.symbol.toLowerCase().includes(q)
+        );
+        setFilteredFromTokens(localResults);
+      } finally {
+        setIsFromSearchLoading(false);
+      }
     }
-  }, [searchTokens, tokens]);
+    // For short queries, the useEffect will handle local filtering
+  }, [searchTokens, tokens, searchCache]);
   
   const handleToSearch = useCallback(async (query: string) => {
     setToSearchQuery(query);
-    if (query.length >= 2) {
-      const results = await searchTokens(query);
-      setFilteredToTokens(results);
-    } else {
-      setFilteredToTokens(tokens);
+    
+    // For longer queries, use the API to get more accurate results
+    if (query.length >= 3) {
+      setIsToSearchLoading(true);
+      try {
+        // Check cache first
+        if (searchCache.has(query)) {
+          setFilteredToTokens(searchCache.get(query) || []);
+          setIsToSearchLoading(false);
+          return;
+        }
+        
+        const results = await searchTokens(query);
+        if (results && results.length > 0) {
+          // Combine API results with local filtered results for better matching
+          const localResults = tokens.filter((token) => 
+            token.name.toLowerCase().includes(query.toLowerCase()) || 
+            token.symbol.toLowerCase().includes(query.toLowerCase())
+          );
+          
+          // Create a Map of IDs to avoid duplicates
+          const uniqueResults = new Map();
+          
+          // Prioritize API results
+          results.forEach(token => uniqueResults.set(token.id, token));
+          
+          // Add local results that aren't already included
+          localResults.forEach(token => {
+            if (!uniqueResults.has(token.id)) {
+              uniqueResults.set(token.id, token);
+            }
+          });
+          
+          const finalResults = Array.from(uniqueResults.values());
+          // Cache the results
+          searchCache.set(query, finalResults);
+          setFilteredToTokens(finalResults);
+        }
+      } catch (error) {
+        console.error("Error searching tokens:", error);
+        // Fallback to local filtering in case of API error
+        const q = query.toLowerCase();
+        const localResults = tokens.filter((token) => 
+          token.name.toLowerCase().includes(q) || 
+          token.symbol.toLowerCase().includes(q)
+        );
+        setFilteredToTokens(localResults);
+      } finally {
+        setIsToSearchLoading(false);
+      }
     }
-  }, [searchTokens, tokens]);
+    // For short queries, the useEffect will handle local filtering
+  }, [searchTokens, tokens, searchCache]);
+
+  // Effect for loading token prices for selected tokens
+  useEffect(() => {
+    const fetchSelectedTokenPrices = async () => {
+      if (fromToken && !tokenPrices[fromToken.id]) {
+        try {
+          await getTokenPrice(fromToken.id, fromToken.symbol);
+        } catch (error) {
+          console.error(`Failed to fetch price for ${fromToken.symbol}:`, error);
+        }
+      }
+      
+      if (toToken && !tokenPrices[toToken.id]) {
+        try {
+          await getTokenPrice(toToken.id, toToken.symbol);
+        } catch (error) {
+          console.error(`Failed to fetch price for ${toToken.symbol}:`, error);
+        }
+      }
+    };
+    
+    fetchSelectedTokenPrices();
+  }, [fromToken, toToken, tokenPrices, getTokenPrice]);
+
+  // Extract tokens safely
+  const safeFromTokenSymbol = fromToken?.symbol || 'Select';
+  const safeToTokenSymbol = toToken?.symbol || 'Select';
+  
+  // Function to safely display token exchange rate
+  const getExchangeRateDisplay = () => {
+    if (fromToken && toToken && fromAmount && toAmount && parseFloat(fromAmount) > 0) {
+      try {
+        const rate = (parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6);
+        return `1 ${safeFromTokenSymbol} ≈ ${rate} ${safeToTokenSymbol}`;
+      } catch (error) {
+        console.error('Error calculating exchange rate:', error);
+        return `1 ${safeFromTokenSymbol} ≈ ? ${safeToTokenSymbol}`;
+      }
+    }
+    return '';
+  };
 
   return (
     <div className="bg-gray-800 bg-opacity-70 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-blue-500/30">
@@ -234,23 +391,22 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
           <button
             className="flex items-center min-w-[120px] hover:bg-gray-700/50 p-2 rounded-md transition-all duration-200"
             onClick={() => setIsFromTokenSelectOpen(true)}
-          >
-            {fromToken ? (
+          >            {fromToken ? (
               <div className="flex items-center">
                 {fromToken.icon ? (
                   <Image 
                     src={fromToken.icon}
-                    alt={fromToken.symbol} 
+                    alt={safeFromTokenSymbol} 
                     className="w-6 h-6 rounded-full mr-2" 
                     width={24}
                     height={24}
                   />
                 ) : (
                   <div className="w-6 h-6 bg-gray-700 text-blue-300 rounded-full flex items-center justify-center mr-2">
-                    {fromToken.symbol.substring(0, 1)}
+                    {safeFromTokenSymbol.substring(0, 1)}
                   </div>
                 )}
-                <span className="font-medium text-white">{fromToken.symbol}</span>
+                <span className="font-medium text-white">{safeFromTokenSymbol}</span>
                 <ChevronDown size={16} className="ml-1 text-blue-300" />
               </div>
             ) : (
@@ -305,17 +461,17 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
                 {toToken.icon ? (
                   <Image 
                     src={toToken.icon} 
-                    alt={toToken.symbol} 
+                    alt={safeToTokenSymbol} 
                     className="w-6 h-6 rounded-full mr-2" 
                     width={24}
                     height={24}
                   />
-                ) : (
+                ) : (                  
                   <div className="w-6 h-6 bg-gray-700 text-purple-300 rounded-full flex items-center justify-center mr-2">
-                    {toToken.symbol.substring(0, 1)}
+                    {safeToTokenSymbol.substring(0, 1)}
                   </div>
                 )}
-                <span className="font-medium text-white">{toToken.symbol}</span>
+                <span className="font-medium text-white">{safeToTokenSymbol}</span>
                 <ChevronDown size={16} className="ml-1 text-purple-300" />
               </div>
             ) : (
@@ -358,7 +514,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         
         {fromToken && toToken && fromAmount && toAmount && parseFloat(fromAmount) > 0 && (
           <span className="text-sm text-gray-300 bg-gray-700/70 py-1.5 px-3 rounded-md">
-            1 {fromToken.symbol} ≈ {(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} {toToken.symbol}
+            {getExchangeRateDisplay()}
           </span>
         )}
       </div>
@@ -390,9 +546,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         ) : (
           'Swap Tokens'
         )}
-      </button>
-
-      {/* Token Selection Dialog for "From" */}
+      </button>      {/* Token Selection Dialog for "From" */}
       <Dialog open={isFromTokenSelectOpen} onOpenChange={setIsFromTokenSelectOpen}>
         <DialogContent className="border-blue-500/30">
           <DialogHeader>
@@ -410,44 +564,57 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
               className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent mb-3"
             />
             
+            {isFromSearchLoading && (
+              <div className="flex justify-center items-center my-4">
+                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span className="text-gray-300">Searching tokens...</span>
+              </div>
+            )}
+            
             <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 pr-1">
-              {filteredFromTokens.map((token) => (
-                <button
-                  key={token.id}
-                  className="w-full text-left p-3 hover:bg-gray-700/70 rounded-md transition-all duration-200 flex items-center my-1 border border-transparent hover:border-blue-500/20"
-                  onClick={() => {
-                    setFromToken(token);
-                    setIsFromTokenSelectOpen(false);
-                    setFromSearchQuery('');
-                  }}
-                >
-                  {token.icon ? (
-                    <Image 
-                      src={token.icon} 
-                      alt={token.symbol} 
-                      className="w-8 h-8 rounded-full mr-3" 
-                      width={32}
-                      height={32}
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center mr-3">
-                      {token.symbol.substring(0, 1)}
-                    </div>
-                  )}
-                  <div>
-                    <div className="font-medium text-white">{token.symbol}</div>
-                    <div className="text-xs text-gray-400">{token.name}</div>
-                  </div>
-                  {tokenPrices[token.id] && (
-                    <div className="ml-auto text-right">
-                      <div className="text-white">${tokenPrices[token.id].price.toFixed(2)}</div>
-                      <div className={`text-xs ${tokenPrices[token.id].change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {tokenPrices[token.id].change24h >= 0 ? '+' : ''}{tokenPrices[token.id].change24h.toFixed(2)}%
+              {filteredFromTokens.length === 0 && !isFromSearchLoading ? (
+                <div className="text-center text-gray-400 py-4">
+                  No tokens found. Try a different search.
+                </div>
+              ) : (
+                filteredFromTokens.map((token) => (
+                  <button
+                    key={token.id}
+                    className="w-full text-left p-3 hover:bg-gray-700/70 rounded-md transition-all duration-200 flex items-center my-1 border border-transparent hover:border-blue-500/20"
+                    onClick={() => {
+                      setFromToken(token);
+                      setIsFromTokenSelectOpen(false);
+                      setFromSearchQuery('');
+                    }}
+                  >
+                    {token.icon ? (
+                      <Image 
+                        src={token.icon} 
+                        alt={token.symbol || ''} 
+                        className="w-8 h-8 rounded-full mr-3" 
+                        width={32}
+                        height={32}
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center mr-3">
+                        {token.symbol ? token.symbol.substring(0, 1) : '?'}
                       </div>
+                    )}
+                    <div>
+                      <div className="font-medium text-white">{token.symbol || 'Unknown'}</div>
+                      <div className="text-xs text-gray-400">{token.name || 'Unknown Token'}</div>
                     </div>
-                  )}
-                </button>
-              ))}
+                    {tokenPrices[token.id] && (
+                      <div className="ml-auto text-right">
+                        <div className="text-white">${Number(tokenPrices[token.id].price).toFixed(2)}</div>
+                        <div className={`text-xs ${Number(tokenPrices[token.id].change24h) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {Number(tokenPrices[token.id].change24h) >= 0 ? '+' : ''}{Number(tokenPrices[token.id].change24h).toFixed(2)}%
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </DialogContent>
@@ -471,44 +638,57 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
               className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent mb-3"
             />
             
+            {isToSearchLoading && (
+              <div className="flex justify-center items-center my-4">
+                <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span className="text-gray-300">Searching tokens...</span>
+              </div>
+            )}
+            
             <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 pr-1">
-              {filteredToTokens.map((token) => (
-                <button
-                  key={token.id}
-                  className="w-full text-left p-3 hover:bg-gray-700/70 rounded-md transition-all duration-200 flex items-center my-1 border border-transparent hover:border-purple-500/20"
-                  onClick={() => {
-                    setToToken(token);
-                    setIsToTokenSelectOpen(false);
-                    setToSearchQuery('');
-                  }}
-                >
-                  {token.icon ? (
-                    <Image 
-                      src={token.icon} 
-                      alt={token.symbol} 
-                      className="w-8 h-8 rounded-full mr-3" 
-                      width={32}
-                      height={32}
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center mr-3">
-                      {token.symbol.substring(0, 1)}
-                    </div>
-                  )}
-                  <div>
-                    <div className="font-medium text-white">{token.symbol}</div>
-                    <div className="text-xs text-gray-400">{token.name}</div>
-                  </div>
-                  {tokenPrices[token.id] && (
-                    <div className="ml-auto text-right">
-                      <div className="text-white">${tokenPrices[token.id].price.toFixed(2)}</div>
-                      <div className={`text-xs ${tokenPrices[token.id].change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {tokenPrices[token.id].change24h >= 0 ? '+' : ''}{tokenPrices[token.id].change24h.toFixed(2)}%
+              {filteredToTokens.length === 0 && !isToSearchLoading ? (
+                <div className="text-center text-gray-400 py-4">
+                  No tokens found. Try a different search.
+                </div>
+              ) : (
+                filteredToTokens.map((token) => (
+                  <button
+                    key={token.id}
+                    className="w-full text-left p-3 hover:bg-gray-700/70 rounded-md transition-all duration-200 flex items-center my-1 border border-transparent hover:border-purple-500/20"
+                    onClick={() => {
+                      setToToken(token);
+                      setIsToTokenSelectOpen(false);
+                      setToSearchQuery('');
+                    }}
+                  >
+                    {token.icon ? (
+                      <Image 
+                        src={token.icon} 
+                        alt={token.symbol || ''} 
+                        className="w-8 h-8 rounded-full mr-3" 
+                        width={32}
+                        height={32}
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center mr-3">
+                        {token.symbol ? token.symbol.substring(0, 1) : '?'}
                       </div>
+                    )}
+                    <div>
+                      <div className="font-medium text-white">{token.symbol || 'Unknown'}</div>
+                      <div className="text-xs text-gray-400">{token.name || 'Unknown Token'}</div>
                     </div>
-                  )}
-                </button>
-              ))}
+                    {tokenPrices[token.id] && (
+                      <div className="ml-auto text-right">
+                        <div className="text-white">${Number(tokenPrices[token.id].price).toFixed(2)}</div>
+                        <div className={`text-xs ${Number(tokenPrices[token.id].change24h) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {Number(tokenPrices[token.id].change24h) >= 0 ? '+' : ''}{Number(tokenPrices[token.id].change24h).toFixed(2)}%
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </DialogContent>

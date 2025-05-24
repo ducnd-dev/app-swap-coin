@@ -1,36 +1,36 @@
-// Oracle giá tự quản lý sử dụng Chainlink
+// Self-managed price Oracle using Chainlink
 import { ethers } from 'ethers';
 
-// Địa chỉ Oracle hợp đồng Chainlink trên Ethereum
+// Chainlink Oracle contract addresses on Ethereum
 const CHAINLINK_ORACLES: Record<string, string> = {
   'ETH': '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419', // ETH/USD
   'BTC': '0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c', // BTC/USD
   'USDT': '0x3E7d1eAB13ad0104d2750B8863b489D65364e32D', // USDT/USD
 };
 
-// ABI đơn giản cho Chainlink Price Feed
+// Simple ABI for Chainlink Price Feed
 const CHAINLINK_PRICE_FEED_ABI = [
   "function latestRoundData() external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)",
   "function decimals() external view returns (uint8)"
 ];
 
-// Cache provider để tăng hiệu suất
+// Cache provider to increase performance
 let providerInstance: ethers.providers.JsonRpcProvider | null = null;
 let providerTimestamp = 0;
-const PROVIDER_TTL = 60 * 1000; // 60 giây
-const PROVIDER_TIMEOUT = 5000; // 5 giây
+const PROVIDER_TTL = 60 * 1000; // 60 seconds
+const PROVIDER_TIMEOUT = 5000; // 5 seconds
 
 /**
- * Lấy provider Ethereum với cache
- * @returns Ethers Provider với timeout
+ * Get Ethereum provider with caching
+ * @returns Ethers Provider with timeout
  */
 function getProvider() {
   const currentTime = Date.now();
   
-  // Nếu có provider trong cache và còn hiệu lực, sử dụng nó
+  // If there is a provider in the cache and it's still valid, use it
   if (providerInstance && currentTime - providerTimestamp < PROVIDER_TTL) {
     return providerInstance;
-  }  // Danh sách RPC URLs từ biến môi trường và fallback
+  }// Danh sách RPC URLs từ biến môi trường và fallback
   let rpcUrlsFromEnv: string[] = [];
     if (process.env.ETHEREUM_RPC_URL) {
     // Support multiple URLs separated by commas
@@ -131,9 +131,8 @@ export async function getTokenPriceFromChainlink(symbol: string, tryCount: numbe
           oracle.latestRoundData()
         ]);
             const { answer, updatedAt } = latestData;
-          
-          if (!answer || Number(answer) <= 0) {
-            throw new Error(`Giá không hợp lệ cho ${normalizedSymbol}: ${answer}`);
+            if (!answer || Number(answer) <= 0) {
+            throw new Error(`Invalid price for ${normalizedSymbol}: ${answer}`);
           }
           
           const price = Number(answer) / Math.pow(10, decimals);
@@ -153,10 +152,9 @@ export async function getTokenPriceFromChainlink(symbol: string, tryCount: numbe
             timestamp: currentTime
           };
           
-          console.log(`✅ Lấy giá ${normalizedSymbol} thành công: $${price}`);
-          return result;
-      } catch (contractError) {
-        console.error(`Lỗi kết nối hợp đồng ${normalizedSymbol}:`, contractError);
+          console.log(`✅ Retrieved ${normalizedSymbol} price successfully: $${price}`);
+          return result;      } catch (contractError) {
+        console.error(`Contract connection error for ${normalizedSymbol}:`, contractError);
         throw contractError;
       }
     })();
@@ -164,15 +162,14 @@ export async function getTokenPriceFromChainlink(symbol: string, tryCount: numbe
     return result;
     
   } catch (error) {
-    console.error(`Lỗi khi lấy giá ${normalizedSymbol} từ Chainlink:`, error);
-    
-    if (tryCount < 2) {
-      console.log(`Thử lại lần ${tryCount + 1} cho ${normalizedSymbol}...`);
+    console.error(`Error retrieving ${normalizedSymbol} price from Chainlink:`, error);
+      if (tryCount < 2) {
+      console.log(`Retrying attempt ${tryCount + 1} for ${normalizedSymbol}...`);
       providerInstance = null;
       await new Promise(resolve => setTimeout(resolve, 1000));
       return getTokenPriceFromChainlink(normalizedSymbol, tryCount + 1);
     }
-    console.log(`⚠️ Sử dụng dữ liệu giả cho ${normalizedSymbol}`);
+    console.log(`⚠️ Using mock data for ${normalizedSymbol}`);
     const mockData = generateMockTokenPrice(normalizedSymbol);
     
     priceCache[normalizedSymbol] = {
