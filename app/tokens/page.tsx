@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTokens } from '@/app/contexts/TokenContext';
 import TokenPriceChart from '@/app/components/tokens/TokenPriceChart';
 import BackButton from '@/app/components/ui/back-button';
+import OraclePriceDisplay from '@/app/components/tokens/OraclePriceDisplay';
 
 export default function TokenDetailPage() {
   const { tokens, tokenPrices } = useTokens();
@@ -58,8 +59,19 @@ export default function TokenDetailPage() {
       
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <TokenPriceChart symbol={selectedToken} days={days} />
+      </div>      {/* Oracle Prices Display */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Oracle Prices</h2>
+        <div className="text-sm text-gray-600 mb-2">Giá từ Oracle nội bộ - Không phụ thuộc vào bên thứ 3</div>
+        <div>
+          <OraclePriceDisplay 
+            symbols={['ETH', 'BTC', 'USDT']} 
+            refreshInterval={30000} 
+            showTitle={false}
+          />
+        </div>
       </div>
-      
+
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold mb-4">Popular Tokens</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

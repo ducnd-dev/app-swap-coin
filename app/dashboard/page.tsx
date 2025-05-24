@@ -10,6 +10,7 @@ import SwapInterface from '@/app/components/swap/SwapInterface';
 import TransactionHistory from '@/app/components/transactions/TransactionHistory';
 import PriceAlerts from '@/app/components/alerts/PriceAlerts';
 import LeaderboardTab from '@/app/components/leaderboard/LeaderboardTab';
+import OraclePriceDisplay from '@/app/components/tokens/OraclePriceDisplay';
 
 // Contexts
 import { useAuth } from '@/app/contexts/AuthContext';
@@ -60,8 +61,7 @@ export default function Dashboard() {
           <TabsTrigger value="history" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">History</TabsTrigger>
           <TabsTrigger value="alerts" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">Alerts</TabsTrigger>
           <TabsTrigger value="leaderboard" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md">Rank</TabsTrigger>
-        </TabsList>
-        <div className="flex justify-between mt-2 mb-4 text-xs bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-lg px-4 py-3 border border-gray-700/50">
+        </TabsList>        <div className="flex justify-between mt-2 mb-4 text-xs bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-lg px-4 py-3 border border-gray-700/50">
           <button 
             onClick={() => router.push('/tokens')}
             className="text-blue-300 hover:text-blue-200 transition-colors"
@@ -80,6 +80,15 @@ export default function Dashboard() {
           >
             Logout
           </button>
+        </div>
+        
+        {/* Oracle Prices Display */}
+        <div className="mb-4">
+          <OraclePriceDisplay 
+            symbols={['ETH', 'BTC', 'USDT']} 
+            refreshInterval={30000} 
+            className="bg-gray-800 bg-opacity-70 backdrop-blur-lg border border-gray-700"
+          />
         </div>
 
         <TabsContent value="swap" className="w-full">

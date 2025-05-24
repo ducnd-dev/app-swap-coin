@@ -19,7 +19,8 @@
     "test:api:enhanced": "tsx app/scripts/api-test-enhanced.ts",
     "test:market": "tsx app/scripts/coin-market-test.ts",
     "test:market:fixed": "tsx app/scripts/coin-market-test-fixed.ts",
-    "test:market:solution": "tsx app/scripts/coin-market-test-solution.ts"
+    "test:market:solution": "tsx app/scripts/coin-market-test-solution.ts",
+    "test:oracle": "tsx app/scripts/test-oracle-prices.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
