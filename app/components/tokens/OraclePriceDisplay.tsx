@@ -1,4 +1,4 @@
-// Component hiển thị giá token từ Oracle nội bộ
+// Component to display token prices from internal Oracle
 'use client';
 
 import { RefreshCw } from 'lucide-react';
@@ -45,17 +45,16 @@ export default function OraclePriceDisplay({
   };
   
   return (
-    <div className={`bg-gray-800 rounded-lg shadow-lg p-4 ${className}`}>
-      {showTitle && (
+    <div className={`bg-gray-800 rounded-lg shadow-lg p-4 ${className}`}>      {showTitle && (
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-white">Giá Token Từ Oracle</h2>
+          <h2 className="text-xl font-semibold text-white">Token Prices From Oracle</h2>
           <button
             onClick={() => fetchPrices()}
             disabled={isLoading}
             className="flex items-center text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
             <RefreshCw size={14} className={`mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Làm mới
+            Refresh
           </button>
         </div>
       )}
@@ -74,9 +73,8 @@ export default function OraclePriceDisplay({
                 </div>
                 <div>
                   <div className="font-semibold text-white">{token.symbol}</div>
-                  {showSource && (
-                    <div className="text-xs text-gray-400">
-                      Nguồn: {token.source === 'chainlink' ? 'Chainlink Oracle' : 'Dữ liệu giả'}
+                  {showSource && (                    <div className="text-xs text-gray-400">
+                      Source: {token.source === 'chainlink' ? 'Chainlink Oracle' : 'Mock Data'}
                     </div>
                   )}
                 </div>
@@ -90,10 +88,9 @@ export default function OraclePriceDisplay({
               </div>
             </div>
           ))}
-          
-          {lastUpdated && (
+            {lastUpdated && (
             <div className="text-right text-xs text-gray-400 mt-2">
-              Cập nhật lúc: {formatUpdated(lastUpdated)}
+              Last updated: {formatUpdated(lastUpdated)}
             </div>
           )}
           

@@ -22,7 +22,8 @@ interface SwapInterfaceProps {
   onSwapComplete: () => void;
 }
 
-export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceProps) {  // Context and hooks
+export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceProps) {
+  // Context and hooks
   const { tokens, popularTokens, tokenPrices } = useTokens();
   const { searchTokens, getSwapQuote } = useTokenOperations();
 
@@ -37,8 +38,10 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   const [isToTokenSelectOpen, setIsToTokenSelectOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isQuoteLoading, setIsQuoteLoading] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filteredTokens, setFilteredTokens] = useState<Token[]>([]);
+  const [fromSearchQuery, setFromSearchQuery] = useState<string>('');
+  const [toSearchQuery, setToSearchQuery] = useState<string>('');
+  const [filteredFromTokens, setFilteredFromTokens] = useState<Token[]>([]);
+  const [filteredToTokens, setFilteredToTokens] = useState<Token[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [swapButtonState, setSwapButtonState] = useState<'disabled' | 'ready' | 'confirm' | 'loading'>('disabled');
 
@@ -54,20 +57,41 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
     }
   }, [popularTokens, fromToken, toToken]);
 
-  // Update filtered tokens when search query or tokens change
+  // Initialize filtered tokens
   useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredTokens(tokens);
+    setFilteredFromTokens(tokens);
+    setFilteredToTokens(tokens);
+  }, [tokens]);
+
+  // Handle from token filtering
+  useEffect(() => {
+    if (fromSearchQuery.trim() === '') {
+      setFilteredFromTokens(tokens);
     } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredTokens(
+      const query = fromSearchQuery.toLowerCase();
+      setFilteredFromTokens(
         tokens.filter((token) => 
           token.name.toLowerCase().includes(query) || 
           token.symbol.toLowerCase().includes(query)
         )
       );
     }
-  }, [searchQuery, tokens]);
+  }, [fromSearchQuery, tokens]);
+
+  // Handle to token filtering
+  useEffect(() => {
+    if (toSearchQuery.trim() === '') {
+      setFilteredToTokens(tokens);
+    } else {
+      const query = toSearchQuery.toLowerCase();
+      setFilteredToTokens(
+        tokens.filter((token) => 
+          token.name.toLowerCase().includes(query) || 
+          token.symbol.toLowerCase().includes(query)
+        )
+      );
+    }
+  }, [toSearchQuery, tokens]);
 
   // Effect for checking if swap can be performed
   useEffect(() => {
@@ -119,7 +143,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
     setToToken(temp);
     setFromAmount(toAmount);
     // Quote will be recalculated by the useEffect
-  };  // Execute swap function
+  };
+
+  // Execute swap function
   const executeSwap = async () => {
     if (!fromToken || !toToken || !fromAmount || !toAmount || !wallet) {
       toast.error('Please fill all fields');
@@ -129,7 +155,8 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
     try {
       setIsLoading(true);
       setSwapButtonState('loading');
-      setError(null);      
+      setError(null);
+      
       await axiosClient.post('/api/swap/execute', {
         fromToken: fromToken.symbol,  // API expects symbol, not ID
         toToken: toToken.symbol,      // API expects symbol, not ID
@@ -144,7 +171,8 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       
       // Reset form
       setFromAmount('');
-      setToAmount('');} catch (error) {
+      setToAmount('');
+    } catch (error) {
       console.error('Error executing swap:', error);
       const errorMessage = 'Failed to execute swap';
       setError(errorMessage);
@@ -156,15 +184,26 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   };
 
   // Search for tokens
-  const handleSearch = useCallback(async (query: string) => {
-    setSearchQuery(query);
+  const handleFromSearch = useCallback(async (query: string) => {
+    setFromSearchQuery(query);
     if (query.length >= 2) {
       const results = await searchTokens(query);
-      setFilteredTokens(results);
+      setFilteredFromTokens(results);
     } else {
-      setFilteredTokens(tokens);
+      setFilteredFromTokens(tokens);
     }
   }, [searchTokens, tokens]);
+  
+  const handleToSearch = useCallback(async (query: string) => {
+    setToSearchQuery(query);
+    if (query.length >= 2) {
+      const results = await searchTokens(query);
+      setFilteredToTokens(results);
+    } else {
+      setFilteredToTokens(tokens);
+    }
+  }, [searchTokens, tokens]);
+
   return (
     <div className="bg-gray-800 bg-opacity-70 backdrop-blur-lg p-6 rounded-xl shadow-xl border border-blue-500/30">
       <h1 className="text-2xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300 pb-2">
@@ -179,7 +218,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             Please select or add a wallet to perform swaps.
           </p>
         </div>
-      )}      {/* From Token Section */}
+      )}
+
+      {/* From Token Section */}
       <div className="mb-4">
         <div className="flex justify-between text-sm mb-2">
           <div className="text-blue-300 font-medium">From</div>
@@ -232,7 +273,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             />
           </div>
         </div>
-      </div>{/* Swap Button */}
+      </div>
+
+      {/* Swap Button */}
       <div className="flex justify-center -my-3 z-10 relative">
         <button
           onClick={swapTokens}
@@ -290,7 +333,8 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
                 <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2"></div>
                 <span className="text-gray-400">Loading...</span>
               </div>
-            ) : (              <input
+            ) : (
+              <input
                 type="text"
                 value={toAmount}
                 readOnly
@@ -300,7 +344,10 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             )}
           </div>
         </div>
-      </div>      {/* Settings and info */}      <div className="flex justify-between items-center mb-4 p-3 bg-gray-800/70 rounded-lg border border-gray-700">
+      </div>
+
+      {/* Settings and info */}
+      <div className="flex justify-between items-center mb-4 p-3 bg-gray-800/70 rounded-lg border border-gray-700">
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="flex items-center px-3 py-1.5 text-sm text-blue-300 hover:bg-gray-700 rounded-md transition-all duration-200"
@@ -343,7 +390,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         ) : (
           'Swap Tokens'
         )}
-      </button>      {/* Token Selection Dialog for "From" */}
+      </button>
+
+      {/* Token Selection Dialog for "From" */}
       <Dialog open={isFromTokenSelectOpen} onOpenChange={setIsFromTokenSelectOpen}>
         <DialogContent className="border-blue-500/30">
           <DialogHeader>
@@ -356,20 +405,20 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             <input
               type="text"
               placeholder="Search tokens..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              value={fromSearchQuery}
+              onChange={(e) => handleFromSearch(e.target.value)}
               className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent mb-3"
             />
             
             <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 pr-1">
-              {filteredTokens.map((token) => (
+              {filteredFromTokens.map((token) => (
                 <button
                   key={token.id}
                   className="w-full text-left p-3 hover:bg-gray-700/70 rounded-md transition-all duration-200 flex items-center my-1 border border-transparent hover:border-blue-500/20"
                   onClick={() => {
                     setFromToken(token);
                     setIsFromTokenSelectOpen(false);
-                    setSearchQuery('');
+                    setFromSearchQuery('');
                   }}
                 >
                   {token.icon ? (
@@ -402,7 +451,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             </div>
           </div>
         </DialogContent>
-      </Dialog>      {/* Token Selection Dialog for "To" */}
+      </Dialog>
+
+      {/* Token Selection Dialog for "To" */}
       <Dialog open={isToTokenSelectOpen} onOpenChange={setIsToTokenSelectOpen}>
         <DialogContent className="border-purple-500/30">
           <DialogHeader>
@@ -415,20 +466,20 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             <input
               type="text"
               placeholder="Search tokens..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              value={toSearchQuery}
+              onChange={(e) => handleToSearch(e.target.value)}
               className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent mb-3"
             />
             
             <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 pr-1">
-              {filteredTokens.map((token) => (
+              {filteredToTokens.map((token) => (
                 <button
                   key={token.id}
                   className="w-full text-left p-3 hover:bg-gray-700/70 rounded-md transition-all duration-200 flex items-center my-1 border border-transparent hover:border-purple-500/20"
                   onClick={() => {
                     setToToken(token);
                     setIsToTokenSelectOpen(false);
-                    setSearchQuery('');
+                    setToSearchQuery('');
                   }}
                 >
                   {token.icon ? (
@@ -461,7 +512,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
             </div>
           </div>
         </DialogContent>
-      </Dialog>      {/* Settings Dialog */}
+      </Dialog>
+
+      {/* Settings Dialog */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
         <DialogContent className="border-blue-500/30">
           <DialogHeader>
@@ -555,5 +608,5 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

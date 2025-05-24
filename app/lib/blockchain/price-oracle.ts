@@ -32,11 +32,10 @@ function getProvider() {
     return providerInstance;
   }  // Danh sách RPC URLs từ biến môi trường và fallback
   let rpcUrlsFromEnv: string[] = [];
-  
-  if (process.env.ETHEREUM_RPC_URL) {
-    // Hỗ trợ nhiều URL được phân tách bằng dấu phẩy
+    if (process.env.ETHEREUM_RPC_URL) {
+    // Support multiple URLs separated by commas
     rpcUrlsFromEnv = process.env.ETHEREUM_RPC_URL.split(',').map(url => url.trim());
-    console.log(`Đã tìm thấy ${rpcUrlsFromEnv.length} RPC URLs từ biến môi trường`);
+    console.log(`Found ${rpcUrlsFromEnv.length} RPC URLs from environment variables`);
   }
   
   // Kết hợp từ môi trường và fallback
@@ -50,28 +49,26 @@ function getProvider() {
   // Chọn một RPC URL ngẫu nhiên từ danh sách
   const randomIndex = Math.floor(Math.random() * rpcUrls.length);
   const rpcUrl = rpcUrls[randomIndex];
-  
-  try {
-    console.log(`Đang kết nối đến RPC: ${rpcUrl}`);
+    try {
+    console.log(`Connecting to RPC: ${rpcUrl}`);
     
-    // Tạo provider mới với timeout
+    // Create a new provider with timeout
     const provider = new ethers.providers.JsonRpcProvider({
       url: rpcUrl,
       timeout: PROVIDER_TIMEOUT,
     });
     
-    // Cấu hình thêm cho provider
-    provider.pollingInterval = 10000; // 10 giây để giảm tải lên RPC
+    // Additional configuration for the provider
+    provider.pollingInterval = 10000; // 10 seconds to reduce load on RPC
     
     // Lưu vào cache
     providerInstance = provider;
     providerTimestamp = currentTime;
     
-    return provider;
-  } catch (error) {
-    console.error(`Lỗi khi tạo provider với ${rpcUrl}:`, error);
+    return provider;  } catch (error) {
+    console.error(`Error creating provider with ${rpcUrl}:`, error);
     
-    // Thử Cloudflare nếu tất cả đều thất bại
+    // Try Cloudflare if all else fails
     const fallbackProvider = new ethers.providers.JsonRpcProvider("https://cloudflare-eth.com");
     providerInstance = fallbackProvider;
     providerTimestamp = currentTime;
@@ -110,47 +107,37 @@ export async function getTokenPriceFromChainlink(symbol: string, tryCount: numbe
       currentTime - priceCache[normalizedSymbol].timestamp < CACHE_TTL) {
     return priceCache[normalizedSymbol].data;
   }
-  
-  try {
-    // Kiểm tra xem có hỗ trợ token này không
+    try {
     if (!CHAINLINK_ORACLES[normalizedSymbol]) {
-      throw new Error(`Không hỗ trợ token ${normalizedSymbol}`);
+      throw new Error(`Token ${normalizedSymbol} not supported`);
     }
     
-    // Thêm timeout cho yêu cầu (tăng timeout lên)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Timeout khi kết nối đến Chainlink')), 7000);
+      setTimeout(() => reject(new Error('Timeout connecting to Chainlink')), 7000);
     });
     
-    // Thực hiện yêu cầu với timeout
     const dataPromise = (async () => {
-      // Kết nối đến mạng Ethereum
       const provider = getProvider();
       
       try {
-        // Kết nối đến hợp đồng Oracle
         const oracle = new ethers.Contract(
           CHAINLINK_ORACLES[normalizedSymbol],
           CHAINLINK_PRICE_FEED_ABI,
           provider
         );
         
-        // Lấy số decimals và dữ liệu mới nhất song song
         const [decimals, latestData] = await Promise.all([
           oracle.decimals(),
           oracle.latestRoundData()
         ]);
             const { answer, updatedAt } = latestData;
           
-          // Kiểm tra giá trị có hợp lệ không
           if (!answer || Number(answer) <= 0) {
             throw new Error(`Giá không hợp lệ cho ${normalizedSymbol}: ${answer}`);
           }
           
-          // Chuyển đổi sang giá USD
           const price = Number(answer) / Math.pow(10, decimals);
           
-          // Tạo thời gian cập nhật từ timestamp
           const lastUpdated = new Date(Number(updatedAt) * 1000).toISOString();
           
           const result = {
@@ -161,7 +148,6 @@ export async function getTokenPriceFromChainlink(symbol: string, tryCount: numbe
             change24h: getSimulatedPriceChange(normalizedSymbol)
           };
           
-          // Lưu vào cache
           priceCache[normalizedSymbol] = {
             data: result,
             timestamp: currentTime
@@ -170,35 +156,28 @@ export async function getTokenPriceFromChainlink(symbol: string, tryCount: numbe
           console.log(`✅ Lấy giá ${normalizedSymbol} thành công: $${price}`);
           return result;
       } catch (contractError) {
-        // Xử lý lỗi khi gọi hợp đồng
         console.error(`Lỗi kết nối hợp đồng ${normalizedSymbol}:`, contractError);
         throw contractError;
       }
     })();
-      // Chọn giữa kết quả hoặc timeout
     const result = await Promise.race([dataPromise, timeoutPromise]);
     return result;
     
   } catch (error) {
     console.error(`Lỗi khi lấy giá ${normalizedSymbol} từ Chainlink:`, error);
     
-    // Thử lại với provider khác nếu thất bại và chưa vượt quá số lần thử
     if (tryCount < 2) {
       console.log(`Thử lại lần ${tryCount + 1} cho ${normalizedSymbol}...`);
-      // Reset provider để thử với RPC khác
       providerInstance = null;
-      // Chờ 1 giây trước khi thử lại
       await new Promise(resolve => setTimeout(resolve, 1000));
       return getTokenPriceFromChainlink(normalizedSymbol, tryCount + 1);
     }
-      // Fallback sang dữ liệu giả nếu Oracle thất bại sau tất cả các lần thử
     console.log(`⚠️ Sử dụng dữ liệu giả cho ${normalizedSymbol}`);
     const mockData = generateMockTokenPrice(normalizedSymbol);
     
-    // Lưu dữ liệu giả vào cache với thời gian ngắn hơn
     priceCache[normalizedSymbol] = {
       data: mockData,
-      timestamp: currentTime - Math.floor(CACHE_TTL / 2) // Thời gian cache ngắn hơn cho dữ liệu giả
+      timestamp: currentTime - Math.floor(CACHE_TTL / 2)
     };
     
     return mockData;
@@ -211,12 +190,10 @@ export async function getTokenPriceFromChainlink(symbol: string, tryCount: numbe
  * @returns Phần trăm thay đổi (từ -10 đến +10)
  */
 function getSimulatedPriceChange(symbol: string): number {
-  // Giả lập biến động giá dựa trên ngày và ký hiệu token
   const date = new Date();
   const dateValue = date.getDate() + date.getMonth();
   const symbolValue = symbol.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
   
-  // Tạo giá trị giả lập từ -10 đến +10
   const seed = (dateValue * symbolValue) % 100;
   return (seed - 50) / 5;
 }
@@ -230,7 +207,6 @@ export function generateMockTokenPrice(symbol: string) {
   const normalizedSymbol = symbol.toUpperCase();
   // Giá cơ sở thực tế hơn cho mỗi token (tháng 5/2025)
   const basePrice = {
-    'ETH': 6500,
     'BTC': 120000,
     'USDT': 1,
     'USDC': 1,

@@ -23,6 +23,7 @@
     "test:oracle": "tsx app/scripts/test-oracle-prices.ts",
     "test:oracle:enhanced": "tsx app/scripts/test-oracle-enhanced.ts",
     "test:oracle:new": "tsx app/scripts/test-oracle-enhanced.ts -- --use-new-oracle",
+    "test:oracle:api": "tsx app/scripts/test-oracle-api.ts",
     "test:rpc": "tsx app/scripts/test-rpc-connections.ts"
   },
   "dependencies": {

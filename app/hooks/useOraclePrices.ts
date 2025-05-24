@@ -1,4 +1,4 @@
-// Hook để sử dụng Oracle giá
+// Hook to use the Oracle pricing system
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
@@ -32,9 +32,8 @@ export const useOraclePrices = (options?: UseOraclePricesOptions) => {
       setError(null);
       setIsLoading(true);
       
-      const symbolsParam = symbols.join(',');
-      const response = await axios.get(`/api/tokens/oracle-price?symbols=${symbolsParam}`, {
-        timeout: 8000, // 8 giây timeout
+      const symbolsParam = symbols.join(',');      const response = await axios.get(`/api/tokens/oracle-price?symbols=${symbolsParam}`, {
+        timeout: 8000, // 8 seconds timeout
       });
       
       if (response.data && response.data.prices) {
@@ -42,34 +41,32 @@ export const useOraclePrices = (options?: UseOraclePricesOptions) => {
         response.data.prices.forEach((price: TokenPrice) => {
           newPrices[price.symbol] = price;
         });
-        
-        // Tính số lượng nguồn dữ liệu
+          // Calculate the number of data sources
         const chainlinkCount = response.data.prices.filter(
           (price: TokenPrice) => price.source === 'chainlink'
         ).length;
         
-        // Nếu không có dữ liệu từ Chainlink, cảnh báo người dùng
+        // If there is no data from Chainlink, warn the user
         if (chainlinkCount === 0 && response.data.prices.length > 0) {
-          console.warn('Đang sử dụng dữ liệu giả thay vì Chainlink Oracle');
-          setError('Cảnh báo: Đang sử dụng dữ liệu giả');
+          console.warn('Using mock data instead of Chainlink Oracle');
+          setError('Warning: Using mock data');
         } else {
           setError(null);
         }
         
         setPrices(newPrices);
         setLastUpdated(new Date().toISOString());
-      }
-    } catch (err) {
-      console.error('Lỗi khi lấy giá từ Oracle:', err);
+      }    } catch (err) {
+      console.error('Error retrieving prices from Oracle:', err);
       
-      // Thử lại tối đa 2 lần nếu lấy giá thất bại
+      // Retry up to 2 times if price retrieval fails
       if (retryCount < 2) {
-        console.log(`Thử lại lần ${retryCount + 1}...`);
+        console.log(`Retrying attempt ${retryCount + 1}...`);
         setTimeout(() => fetchPrices(retryCount + 1), 1000 * (retryCount + 1));
         return;
       }
       
-      setError('Không thể lấy dữ liệu giá');
+      setError('Unable to retrieve price data');
     } finally {
       setIsLoading(false);
     }
