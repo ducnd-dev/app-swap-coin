@@ -1,5 +1,5 @@
 // Script test giá từ Oracle nội bộ - Phiên bản cải tiến
-import { getTokenPriceFromChainlink } from '../lib/blockchain/price-oracle';
+import { getTokenPriceFromChainlink } from '../services/blockchain/price-oracle-service';
 
 // Định dạng giá tiền
 function formatPrice(price: number): string {

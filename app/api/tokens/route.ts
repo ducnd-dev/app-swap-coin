@@ -8,7 +8,8 @@ import { getMultipleTokenPrices } from '@/app/lib/api/prices';
  * Fetches all supported tokens with optional filters
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  try {    // Authentication optional - public endpoint
+  try {
+    // Authentication optional - public endpoint
     // We're not using the user object, but we still authenticate the request
     await authenticateRequest(req);
     
@@ -16,10 +17,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const url = new URL(req.url);
     const network = url.searchParams.get('network');
     const active = url.searchParams.get('active');
-      // Build filters
+    const popular = url.searchParams.get('popular');
+    const stablecoins = url.searchParams.get('stablecoins');
+      
+    // Build filters
     interface TokenFilters {
       network?: string;
       isActive?: boolean;
+      isPopular?: boolean;
+      isStablecoin?: boolean;
     }
     
     const filters: TokenFilters = {};
@@ -34,17 +40,25 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       filters.isActive = false;
     }
     
+    if (popular === 'true') {
+      filters.isPopular = true;
+    }
+    
+    if (stablecoins === 'true') {
+      filters.isStablecoin = true;
+    }
+    
     // Fetch tokens
     const tokens = await prisma.token.findMany({
       where: filters,
       orderBy: {
         symbol: 'asc',
-      },
-    });
+      },    });
     
     // If user is authenticated and tokens are fetched, add price data
     if (tokens.length > 0) {
-      try {        // Get all token symbols
+      try {
+        // Get all token symbols
         const symbols = tokens.map((token: { symbol: string }) => token.symbol);
         
         // Fetch prices for all tokens
@@ -56,15 +70,32 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           currentPrice: prices[token.symbol] || null,
         }));
         
-        return NextResponse.json({ tokens: tokensWithPrices });
-      } catch (error) {
+        const response = {
+          tokens: tokensWithPrices,
+          count: tokensWithPrices.length,
+          timestamp: new Date().toISOString()
+        };
+        
+        return NextResponse.json(response);      } catch (error) {
         console.error('Error fetching token prices:', error);
         // Return tokens without prices if price fetch fails
-        return NextResponse.json({ tokens });
+        const errorResponse = {
+          tokens,
+          count: tokens.length,
+          timestamp: new Date().toISOString(),
+          error: 'Failed to fetch price data'
+        };
+        return NextResponse.json(errorResponse);
       }
     }
     
-    return NextResponse.json({ tokens });
+    const response = {
+      tokens,
+      count: tokens.length,
+      timestamp: new Date().toISOString()
+    };
+    
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching tokens:', error);
     return NextResponse.json(

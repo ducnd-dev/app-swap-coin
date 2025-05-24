@@ -1,6 +1,6 @@
 // Script test nâng cao cho Oracle giá
 import { getTokenPriceFromChainlink as getTokenPriceFromOriginalOracle } from '../lib/blockchain/price-oracle';
-import { getTokenPriceFromChainlink as getTokenPriceFromNewOracle } from '../lib/blockchain/price-oracle';
+import { getTokenPriceFromChainlink as getTokenPriceFromNewOracle } from '../services/blockchain/price-oracle-service';
 
 // Kiểm tra xem có sử dụng Oracle mới hay không
 const useNewOracle = process.argv.includes('--use-new-oracle');

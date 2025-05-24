@@ -37,7 +37,7 @@ async function handleMultipleTokens(symbols: string[]) {
     const chainlinkSources = prices.filter(p => p.source === 'chainlink').length;
     const mockSources = prices.filter(p => p.source === 'mock').length;
     const responseStatus = chainlinkSources > 0 ? 200 : 206;
-      
+    
     return NextResponse.json({
       prices,
       count: prices.length,
@@ -50,6 +50,7 @@ async function handleMultipleTokens(symbols: string[]) {
         status: chainlinkSources > 0 ? 'partial' : 'all-mock'
       }
     }, { status: responseStatus });
+    
   } catch (error) {
     console.error("Error fetching multiple token prices:", error);
     return NextResponse.json(

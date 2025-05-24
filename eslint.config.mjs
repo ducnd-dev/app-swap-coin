@@ -18,6 +18,11 @@ const config = [
       "**/node_modules/**",
       ".next/**",
       "node_modules/**",
+      ".eslintrc.js",
+      ".eslintrc.json",
+      "dist/**",
+      "build/**",
+      "coverage/**",
     ]
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

@@ -2,15 +2,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import axios from 'axios';
-
-interface TokenPrice {
-  symbol: string;
-  price: number;
-  change24h: number;
-  lastUpdated: string;
-  source: string;
-}
+import { getOraclePrices, TokenPrice } from '@/app/lib/api/oracle-price-api';
 
 interface UseOraclePricesOptions {
   symbols?: string[];
@@ -27,27 +19,30 @@ export const useOraclePrices = (options?: UseOraclePricesOptions) => {
   const [isLoading, setIsLoading] = useState<boolean>(initialFetch);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-    const fetchPrices = useCallback(async (retryCount = 0) => {
+  
+  const fetchPrices = useCallback(async (retryCount = 0) => {
     try {
       setError(null);
       setIsLoading(true);
       
-      const symbolsParam = symbols.join(',');      const response = await axios.get(`/api/tokens/oracle-price?symbols=${symbolsParam}`, {
+      // Using our API client utility to get oracle prices
+      const response = await getOraclePrices(symbols, {
         timeout: 8000, // 8 seconds timeout
       });
       
-      if (response.data && response.data.prices) {
+      if (response && response.prices) {
         const newPrices: Record<string, TokenPrice> = {};
-        response.data.prices.forEach((price: TokenPrice) => {
+        response.prices.forEach((price: TokenPrice) => {
           newPrices[price.symbol] = price;
         });
-          // Calculate the number of data sources
-        const chainlinkCount = response.data.prices.filter(
+        
+        // Calculate the number of data sources
+        const chainlinkCount = response.prices.filter(
           (price: TokenPrice) => price.source === 'chainlink'
         ).length;
         
         // If there is no data from Chainlink, warn the user
-        if (chainlinkCount === 0 && response.data.prices.length > 0) {
+        if (chainlinkCount === 0 && response.prices.length > 0) {
           console.warn('Using mock data instead of Chainlink Oracle');
           setError('Warning: Using mock data');
         } else {
@@ -55,8 +50,9 @@ export const useOraclePrices = (options?: UseOraclePricesOptions) => {
         }
         
         setPrices(newPrices);
-        setLastUpdated(new Date().toISOString());
-      }    } catch (err) {
+        setLastUpdated(response.timestamp || new Date().toISOString());
+      }
+    } catch (err) {
       console.error('Error retrieving prices from Oracle:', err);
       
       // Retry up to 2 times if price retrieval fails
