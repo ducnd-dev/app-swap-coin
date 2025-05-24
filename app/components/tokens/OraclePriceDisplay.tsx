@@ -60,12 +60,12 @@ export default function OraclePriceDisplay({
         </div>
       )}
       
-      {error ? (
+      {error && (
         <div className="bg-red-900/20 border border-red-500/30 rounded-md p-3 text-red-300">
           {error}
         </div>
-      ) : (
-        <div className="space-y-4">
+      )}
+      <div className="space-y-4">
           {priceList.map((token) => (
             <div key={token.symbol} className="bg-gray-700/70 rounded-md p-3 flex justify-between items-center">
               <div className="flex items-center">
@@ -102,8 +102,7 @@ export default function OraclePriceDisplay({
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
