@@ -12,22 +12,21 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     await initializePrisma();
     
     // Authentication optional - public endpoint
-    await authenticateRequest(req);
-      // Parse query parameter
+    await authenticateRequest(req);    // Parse query parameter
     const url = new URL(req.url);
     const query = url.searchParams.get('q') || '';
     
-    // Nếu không có query, trả về tất cả tokens (giới hạn số lượng)
+    // If no query is provided, return all tokens (with limit)
     if (!query) {
       const allTokens = await prisma.token.findMany({
         where: { isActive: true },
-        take: 20, // Giới hạn số lượng token trả về
+        take: 20, // Limit number of tokens returned
         orderBy: { symbol: 'asc' }
       });
       return NextResponse.json({ tokens: allTokens });
     }
     
-    // Chỉ lọc nếu query ít nhất 2 ký tự
+    // Only filter if query is at least 2 characters
     if (query.length < 2) {
       return NextResponse.json({ tokens: [] });
     }

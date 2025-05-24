@@ -65,11 +65,11 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
         }
       }));
       
-      return priceData.price;
-    } catch (error) {
+      return priceData.price;    } catch (error) {
       console.error(`Error fetching price for token ID ${tokenId}:`, error);
       return null;
-    }  }, [tokens]); // Adding tokens as a dependency since we use it in the function
+    }
+  }, [tokens]); // Adding tokens as a dependency since we use it in the function
   
   // Function to fetch supported tokens (wrapped in useCallback)
   const fetchTokens = useCallback(async () => {
@@ -103,10 +103,10 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchTokens();
   }, [fetchTokens]);
-
   // Function to search tokens by name or symbol
-  const searchTokens = async (query: string): Promise<Token[]> => {    if (!query || query.trim() === '') {
-      return tokens;
+  const searchTokens = async (query: string): Promise<Token[]> => {
+    if (!query || query.trim() === '') {
+      return []; // Return empty array instead of all tokens to prevent infinite loop
     }
     
     try {

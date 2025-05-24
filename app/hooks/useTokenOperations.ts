@@ -55,21 +55,22 @@ export const useTokenOperations = () => {
       setIsLoadingPrices(false);
     }
   }, [tokenPrices]);
-
   // Search for tokens
   const searchTokens = useCallback(async (query: string): Promise<Token[]> => {
     if (!query || query.trim() === '') {
       return [];
-    }    try {
+    }
+    
+    try {
       const response = await axiosClient.get('/api/tokens/search', {
         params: { q: query }
       });
-      return response.data.tokens;
+      return response.data.tokens || [];
     } catch (error) {
       console.error('Error searching tokens:', error);
       return [];
     }
-  }, []);  // Get swap quote
+  }, []);// Get swap quote
   const getSwapQuote = useCallback(async (
     fromTokenId: string, 
     toTokenId: string, 

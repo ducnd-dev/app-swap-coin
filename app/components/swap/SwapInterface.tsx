@@ -63,9 +63,13 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   useEffect(() => {
     setFilteredFromTokens(tokens);
     setFilteredToTokens(tokens);
-  }, [tokens]);
-  // Handle from token filtering with debounce
+  }, [tokens]);  // Handle from token filtering with debounce - handle local filtering only when not using API
   useEffect(() => {
+    // Skip if search is handled by handleFromSearch (for queries >= 3 chars)
+    if (fromSearchQuery.length >= 3) {
+      return; // handleFromSearch will handle this
+    }
+    
     const delaySearch = setTimeout(() => {
       if (fromSearchQuery.trim() === '') {
         setFilteredFromTokens(tokens);
@@ -82,9 +86,13 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
 
     return () => clearTimeout(delaySearch);
   }, [fromSearchQuery, tokens]);
-
-  // Handle to token filtering with debounce
+  // Handle to token filtering with debounce - handle local filtering only when not using API
   useEffect(() => {
+    // Skip if search is handled by handleToSearch (for queries >= 3 chars)
+    if (toSearchQuery.length >= 3) {
+      return; // handleToSearch will handle this
+    }
+    
     const delaySearch = setTimeout(() => {
       if (toSearchQuery.trim() === '') {
         setFilteredToTokens(tokens);
@@ -206,10 +214,15 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       has: (key: string): boolean => cache.has(key.toLowerCase())
     };
   }, [])();
-  
-  // Search for tokens - combining local filtering with API search for better results
+    // Search for tokens - combining local filtering with API search for better results
   const handleFromSearch = useCallback(async (query: string) => {
     setFromSearchQuery(query);
+    
+    // If query is empty, just show all tokens
+    if (!query || query.trim() === '') {
+      setFilteredFromTokens(tokens);
+      return;
+    }
     
     // For longer queries, use the API to get more accurate results
     if (query.length >= 3) {
@@ -223,31 +236,36 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         }
         
         const results = await searchTokens(query);
+        
+        // Combine API results with local filtered results for better matching
+        const localResults = tokens.filter((token) => 
+          token.name.toLowerCase().includes(query.toLowerCase()) || 
+          token.symbol.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        // Create a Map of IDs to avoid duplicates
+        const uniqueResults = new Map();
+        
+        // Add API results first
         if (results && results.length > 0) {
-          // Combine API results with local filtered results for better matching
-          const localResults = tokens.filter((token) => 
-            token.name.toLowerCase().includes(query.toLowerCase()) || 
-            token.symbol.toLowerCase().includes(query.toLowerCase())
-          );
-          
-          // Create a Map of IDs to avoid duplicates
-          const uniqueResults = new Map();
-          
-          // Prioritize API results
           results.forEach(token => uniqueResults.set(token.id, token));
-          
-          // Add local results that aren't already included
-          localResults.forEach(token => {
-            if (!uniqueResults.has(token.id)) {
-              uniqueResults.set(token.id, token);
-            }
-          });
-          
-          const finalResults = Array.from(uniqueResults.values());
-          // Cache the results
-          searchCache.set(query, finalResults);
-          setFilteredFromTokens(finalResults);
         }
+        
+        // Add local results that aren't already included
+        localResults.forEach(token => {
+          if (!uniqueResults.has(token.id)) {
+            uniqueResults.set(token.id, token);
+          }
+        });
+        
+        const finalResults = Array.from(uniqueResults.values());
+        
+        // Cache the results if we have any
+        if (finalResults.length > 0) {
+          searchCache.set(query, finalResults);
+        }
+        
+        setFilteredFromTokens(finalResults);
       } catch (error) {
         console.error("Error searching tokens:", error);
         // Fallback to local filtering in case of API error
@@ -260,12 +278,23 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       } finally {
         setIsFromSearchLoading(false);
       }
+    } else {
+      // For short queries, do local filtering immediately
+      const q = query.toLowerCase();
+      const localResults = tokens.filter((token) => 
+        token.name.toLowerCase().includes(q) || 
+        token.symbol.toLowerCase().includes(q)
+      );
+      setFilteredFromTokens(localResults);
     }
-    // For short queries, the useEffect will handle local filtering
-  }, [searchTokens, tokens, searchCache]);
-  
-  const handleToSearch = useCallback(async (query: string) => {
+  }, [searchTokens, tokens, searchCache]);  const handleToSearch = useCallback(async (query: string) => {
     setToSearchQuery(query);
+    
+    // If query is empty, just show all tokens
+    if (!query || query.trim() === '') {
+      setFilteredToTokens(tokens);
+      return;
+    }
     
     // For longer queries, use the API to get more accurate results
     if (query.length >= 3) {
@@ -279,31 +308,32 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         }
         
         const results = await searchTokens(query);
+        
+        // Combine API results with local filtered results for better matching
+        const localResults = tokens.filter((token) => 
+          token.name.toLowerCase().includes(query.toLowerCase()) || 
+          token.symbol.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        // Create a Map of IDs to avoid duplicates
+        const uniqueResults = new Map();
+        
+        // Add API results first
         if (results && results.length > 0) {
-          // Combine API results with local filtered results for better matching
-          const localResults = tokens.filter((token) => 
-            token.name.toLowerCase().includes(query.toLowerCase()) || 
-            token.symbol.toLowerCase().includes(query.toLowerCase())
-          );
-          
-          // Create a Map of IDs to avoid duplicates
-          const uniqueResults = new Map();
-          
-          // Prioritize API results
           results.forEach(token => uniqueResults.set(token.id, token));
-          
-          // Add local results that aren't already included
-          localResults.forEach(token => {
-            if (!uniqueResults.has(token.id)) {
-              uniqueResults.set(token.id, token);
-            }
-          });
-          
-          const finalResults = Array.from(uniqueResults.values());
-          // Cache the results
-          searchCache.set(query, finalResults);
-          setFilteredToTokens(finalResults);
         }
+        
+        // Add local results that aren't already included
+        localResults.forEach(token => {
+          if (!uniqueResults.has(token.id)) {
+            uniqueResults.set(token.id, token);
+          }
+        });
+        
+        const finalResults = Array.from(uniqueResults.values());
+        // Cache the results
+        searchCache.set(query, finalResults);
+        setFilteredToTokens(finalResults);
       } catch (error) {
         console.error("Error searching tokens:", error);
         // Fallback to local filtering in case of API error
@@ -316,8 +346,15 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       } finally {
         setIsToSearchLoading(false);
       }
+    } else {
+      // For short queries, do local filtering immediately
+      const q = query.toLowerCase();
+      const localResults = tokens.filter((token) => 
+        token.name.toLowerCase().includes(q) || 
+        token.symbol.toLowerCase().includes(q)
+      );
+      setFilteredToTokens(localResults);
     }
-    // For short queries, the useEffect will handle local filtering
   }, [searchTokens, tokens, searchCache]);
 
   // Effect for loading token prices for selected tokens
