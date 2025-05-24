@@ -347,9 +347,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         )}
       </button>      {/* Token Selection Dialog for "From" */}
       <Dialog open={isFromTokenSelectOpen} onOpenChange={setIsFromTokenSelectOpen}>
-        <DialogContent className="bg-gray-800 bg-opacity-90 backdrop-blur-lg border border-blue-500/30 shadow-xl">
+        <DialogContent className="border-blue-500/30">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
+            <DialogTitle className="text-xl font-semibold mb-2 text-center">
               Select a token
             </DialogTitle>
           </DialogHeader>
@@ -406,9 +406,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         </DialogContent>
       </Dialog>      {/* Token Selection Dialog for "To" */}
       <Dialog open={isToTokenSelectOpen} onOpenChange={setIsToTokenSelectOpen}>
-        <DialogContent className="bg-gray-800 bg-opacity-90 backdrop-blur-lg border border-purple-500/30 shadow-xl">
+        <DialogContent className="border-purple-500/30">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
+            <DialogTitle className="text-xl font-semibold mb-2 text-center">
               Select a token
             </DialogTitle>
           </DialogHeader>
@@ -465,9 +465,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         </DialogContent>
       </Dialog>      {/* Settings Dialog */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="bg-gray-800 bg-opacity-90 backdrop-blur-lg border border-blue-500/30 shadow-xl">
+        <DialogContent className="border-blue-500/30">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
+            <DialogTitle className="text-xl font-semibold mb-2 text-center">
               Transaction Settings
             </DialogTitle>
           </DialogHeader>
