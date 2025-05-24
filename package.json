@@ -20,7 +20,10 @@
     "test:market": "tsx app/scripts/coin-market-test.ts",
     "test:market:fixed": "tsx app/scripts/coin-market-test-fixed.ts",
     "test:market:solution": "tsx app/scripts/coin-market-test-solution.ts",
-    "test:oracle": "tsx app/scripts/test-oracle-prices.ts"
+    "test:oracle": "tsx app/scripts/test-oracle-prices.ts",
+    "test:oracle:enhanced": "tsx app/scripts/test-oracle-enhanced.ts",
+    "test:oracle:new": "tsx app/scripts/test-oracle-enhanced.ts -- --use-new-oracle",
+    "test:rpc": "tsx app/scripts/test-rpc-connections.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
@@ -62,5 +65,8 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.19.4",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

@@ -1,4 +1,4 @@
-// Script test giá từ Oracle nội bộ
+// Script test giá từ Oracle nội bộ - Phiên bản cải tiến
 import { getTokenPriceFromChainlink } from '../lib/blockchain/price-oracle';
 
 // Định dạng giá tiền
@@ -28,7 +28,7 @@ interface TokenPriceResult {
 }
 
 /**
- * Test lấy giá từ Oracle
+ * Test lấy giá từ Oracle cải tiến
  */
 async function testOraclePrices() {
   console.log('\n🔍 Đang kiểm tra giá từ Oracle nội bộ...\n');
@@ -44,8 +44,9 @@ async function testOraclePrices() {
   
   // Khởi tạo provider trước để giảm thời gian chờ
   console.log('\n⚙️ Bắt đầu quá trình lấy giá từ Oracle...\n');
-    // Thực hiện tuần tự để thấy rõ quá trình thay vì song song
-  const promises = symbols.map(async (symbol) => {
+  
+  // Thực hiện lấy giá tuần tự để thấy rõ quá trình
+  for (const symbol of symbols) {
     try {
       console.log(`⏳ Đang lấy giá cho ${symbol}...`);
       const startTime = Date.now();
@@ -59,19 +60,13 @@ async function testOraclePrices() {
       
       // In thông tin giá
       console.log(`✅ ${symbol}: ${formatPrice(result.price)} (${formatChange(result.change24h)})`);
-      console.log(`   Nguồn: ${result.source}, Thời gian: ${timings[symbol]}ms`);
+      console.log(`   Nguồn: ${result.source === 'chainlink' ? 'Chainlink Oracle' : 'Dữ liệu giả'}, Thời gian: ${timings[symbol]}ms`);
       console.log(`   Cập nhật: ${new Date(result.lastUpdated).toLocaleString()}`);
       console.log('');
-      
-      return result;
     } catch (error) {
       console.error(`❌ Lỗi khi lấy giá cho ${symbol}:`, error);
-      return null;
     }
-  });
-  
-  // Chờ tất cả các yêu cầu hoàn thành
-  await Promise.all(promises);
+  }
   
   // Tổng kết
   console.log('\n📊 Tổng kết:');
@@ -90,7 +85,15 @@ async function testOraclePrices() {
   if (results.length === symbols.length) {
     console.log('\n✅ Tất cả các token đã được lấy giá thành công!\n');
   } else {
-    console.log(`\n⚠️ Chú ý: ${symbols.length - results.length} tokens không lấy được giá.\n`);
+    console.log(`\n⚠️ Chú ý: ${symbols.length - results.length} token không lấy được giá.\n`);
+  }
+  
+  // Khuyến nghị
+  if (results.filter(r => r.source === 'chainlink').length < symbols.length) {
+    console.log('\n🔧 Khuyến nghị:');
+    console.log('1. Kiểm tra lại RPC URL trong .env.local');
+    console.log('2. Đảm bảo bạn có kết nối internet ổn định');
+    console.log('3. Thử lại sau một thời gian (các RPC công cộng có thể bị giới hạn số lượt truy cập)');
   }
 }
 
