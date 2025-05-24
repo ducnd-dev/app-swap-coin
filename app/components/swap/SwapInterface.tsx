@@ -181,7 +181,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
           </p>
         </div>
       )}      {/* From Token Section */}
-      <div className="mb-2">
+      <div className="mb-4">
         <div className="flex justify-between text-sm mb-2">
           <div className="text-blue-300 font-medium">From</div>
           <div>
