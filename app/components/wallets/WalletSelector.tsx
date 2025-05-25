@@ -5,6 +5,7 @@ import { Plus, Wallet } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
 import { useWallets, Wallet as WalletType } from '@/app/contexts/WalletContext';
+import Web3WalletConnector from './Web3WalletConnector';
 
 interface WalletSelectorProps {
   selectedWallet: WalletType | null;
@@ -78,15 +79,24 @@ export default function WalletSelector({ selectedWallet, onWalletChange }: Walle
   }
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center justify-between mb-2">
+    <div className="mb-4">      <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium text-blue-300">Your Wallets</h3>
-        <button 
-          onClick={() => setIsAddDialogOpen(true)} 
-          className="text-blue-400 hover:text-blue-300 flex items-center text-sm hover:bg-blue-500/10 px-2 py-1 rounded transition-all duration-200 border border-transparent hover:border-blue-500/20"
-        >
-          <Plus size={16} className="mr-1" /> Add Wallet
-        </button>
+        <div className="flex space-x-2">
+          <button 
+            onClick={() => setIsAddDialogOpen(true)} 
+            className="text-blue-400 hover:text-blue-300 flex items-center text-sm hover:bg-blue-500/10 px-2 py-1 rounded transition-all duration-200 border border-transparent hover:border-blue-500/20"
+          >
+            <Plus size={16} className="mr-1" /> Add Wallet
+          </button>
+        </div>
+      </div>
+
+      {/* Web3 Wallet Integration */}
+      <div className="mb-4 border border-blue-500/20 rounded-lg p-3 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-blue-300">Web3 Wallet</h3>
+        </div>
+        <Web3WalletConnector />
       </div>
 
       {/* Wallet List */}

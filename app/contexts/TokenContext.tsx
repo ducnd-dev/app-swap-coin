@@ -2,13 +2,13 @@
 
 import { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import axiosClient from '@/app/lib/api/axios';
-import { toast } from 'react-hot-toast';
 
 export interface Token {
   id: string;
   symbol: string;
   name: string;
   icon?: string;
+  logoURI?: string; // Added for compatibility with components expecting logoURI
   contractAddress?: string;
   decimals: number;
   network: string;
@@ -38,8 +38,7 @@ const TokenContext = createContext<TokenContextType | undefined>(undefined);
 export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [popularTokens, setPopularTokens] = useState<Token[]>([]);
-  const [tokenPrices, setTokenPrices] = useState<Record<string, TokenPrice>>({});  
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [tokenPrices, setTokenPrices] = useState<Record<string, TokenPrice>>({});  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
   // Function to fetch price for a specific token - wrapped in useCallback
@@ -65,53 +64,63 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
         }
       }));
       
-      return priceData.price;    } catch (error) {
+      return priceData.price;
+    } catch (error) {
       console.error(`Error fetching price for token ID ${tokenId}:`, error);
       return null;
     }
   }, [tokens]); // Adding tokens as a dependency since we use it in the function
-  
+  // Map tokens to ensure logoURI is available
+  const mapTokensWithLogos = useCallback((tokens: Token[]): Token[] => {
+    return tokens.map(token => ({
+      ...token,
+      logoURI: token.logoURI || token.icon || `/icons/${token.symbol.toLowerCase()}.svg`
+    }));
+  }, []);
+
   // Function to fetch supported tokens (wrapped in useCallback)
   const fetchTokens = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      setIsLoading(true);
-      setError(null);      // Fetch all tokens from the API
       const response = await axiosClient.get('/api/tokens');
-      const fetchedTokens = response.data.tokens;
-      setTokens(fetchedTokens);
+      const fetchedTokens: Token[] = response.data.tokens || [];
       
-      // Set popular tokens (typically top market cap or most traded)
-      const popular = fetchedTokens.filter((t: Token) => 
-        ['BTC', 'ETH', 'USDT', 'BNB', 'USDC'].includes(t.symbol)
+      // Ensure all tokens have logoURI property
+      const enhancedTokens = mapTokensWithLogos(fetchedTokens);
+      
+      setTokens(enhancedTokens);
+      
+      // Set popular tokens based on specific symbols or other criteria
+      const popular = enhancedTokens.filter(token => 
+        ['BTC', 'ETH', 'USDT', 'BNB', 'USDC', 'XRP', 'ADA', 'MATIC'].includes(token.symbol)
       );
-      setPopularTokens(popular);
       
-      // Fetch prices for popular tokens
-      for (const token of popular) {
-        fetchTokenPrice(token.id);
-      }
-
+      setPopularTokens(popular.length > 0 ? popular : enhancedTokens.slice(0, 5));
+      
     } catch (error) {
+      setError('Failed to fetch tokens');
       console.error('Error fetching tokens:', error);
-      setError('Failed to load supported tokens');
-      toast.error('Failed to load supported tokens');
     } finally {
-      setIsLoading(false);    }
-  }, [fetchTokenPrice]); // Added fetchTokenPrice as a dependency since it's used in this callback
+      setIsLoading(false);
+    }
+  }, [mapTokensWithLogos]);  // Added fetchTokenPrice as a dependency since it's used in this callback
 
   // Fetch tokens on initial load
   useEffect(() => {
     fetchTokens();
   }, [fetchTokens]);
+
   // Function to search tokens by name or symbol
   const searchTokens = async (query: string): Promise<Token[]> => {
     if (!query || query.trim() === '') {
-      return []; // Return empty array instead of all tokens to prevent infinite loop
+      return tokens;
     }
-    
+
     try {
       const response = await axiosClient.get('/api/tokens/search', {
-        params: { q: query }
+        params: { query }
       });
       return response.data.tokens;
     } catch (error) {

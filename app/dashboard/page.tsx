@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/ta
 
 // Components
 import WalletSelector from '@/app/components/wallets/WalletSelector';
-import SwapInterface from '@/app/components/swap/SwapInterface';
+import SwapInterface from '@/app/components/swap/SwapInterfaceWithWeb3';
 import TransactionHistory from '@/app/components/transactions/TransactionHistory';
 import PriceAlerts from '@/app/components/alerts/PriceAlerts';
 import LeaderboardTab from '@/app/components/leaderboard/LeaderboardTab';

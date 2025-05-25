@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ArrowDown, RefreshCw, Settings, AlertCircle, ChevronDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import axiosClient from '@/app/lib/api/axios';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
 import { useTokens, Token } from '@/app/contexts/TokenContext';
 import { useTokenOperations } from '@/app/hooks/useTokenOperations';
+import { useWeb3Swap } from '@/app/hooks/useWeb3Swap';
+import { useLanguage } from '@/app/contexts/LanguageContext';
+import Web3TransactionToast from '@/app/components/web3/Web3TransactionToast';
 
 interface Wallet {
   id: string;
@@ -26,6 +28,8 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   // Context and hooks
   const { tokens, popularTokens, tokenPrices } = useTokens();
   const { searchTokens, getSwapQuote, getTokenPrice } = useTokenOperations();
+  const { executeSwap } = useWeb3Swap();
+  const { t } = useLanguage();
 
   // State variables
   const [fromToken, setFromToken] = useState<Token | null>(null);
@@ -63,13 +67,10 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   useEffect(() => {
     setFilteredFromTokens(tokens);
     setFilteredToTokens(tokens);
-  }, [tokens]);  // Handle from token filtering with debounce - handle local filtering only when not using API
+  }, [tokens]);
+  
+  // Handle from token filtering with debounce
   useEffect(() => {
-    // Skip if search is handled by handleFromSearch (for queries >= 3 chars)
-    if (fromSearchQuery.length >= 3) {
-      return; // handleFromSearch will handle this
-    }
-    
     const delaySearch = setTimeout(() => {
       if (fromSearchQuery.trim() === '') {
         setFilteredFromTokens(tokens);
@@ -86,13 +87,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
 
     return () => clearTimeout(delaySearch);
   }, [fromSearchQuery, tokens]);
-  // Handle to token filtering with debounce - handle local filtering only when not using API
+
+  // Handle to token filtering with debounce
   useEffect(() => {
-    // Skip if search is handled by handleToSearch (for queries >= 3 chars)
-    if (toSearchQuery.length >= 3) {
-      return; // handleToSearch will handle this
-    }
-    
     const delaySearch = setTimeout(() => {
       if (toSearchQuery.trim() === '') {
         setFilteredToTokens(tokens);
@@ -163,7 +160,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   };
 
   // Execute swap function
-  const executeSwap = async () => {
+  const handleSwap = async () => {
     if (!fromToken || !toToken || !fromAmount || !toAmount || !wallet) {
       toast.error('Please fill all fields');
       return;
@@ -174,21 +171,37 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       setSwapButtonState('loading');
       setError(null);
       
-      await axiosClient.post('/api/swap/execute', {
-        fromToken: fromToken.symbol,  // API expects symbol, not ID
-        toToken: toToken.symbol,      // API expects symbol, not ID
-        fromAmount,
-        toAmount,
-        walletAddress: wallet.address,
+      // For Web3 swap, we directly call the swap function
+      const txHash = await executeSwap({
+        fromToken,
+        toToken,
+        amount: fromAmount,
         slippage
       });
-
-      toast.success('Swap executed successfully!');
-      onSwapComplete();
       
-      // Reset form
-      setFromAmount('');
-      setToAmount('');
+      if (txHash) {
+        toast.success(
+          <Web3TransactionToast 
+            txHash={txHash} 
+            fromToken={fromToken.symbol} 
+            toToken={toToken.symbol} 
+            fromAmount={fromAmount} 
+            toAmount={toAmount} 
+            slippage={slippage}
+            onTxSuccess={() => {
+              toast.success('Swap executed successfully!');
+              onSwapComplete();
+              
+              // Reset form
+              setFromAmount('');
+              setToAmount('');
+            }}
+          />,
+          { duration: 6000 }
+        );
+      } else {
+        toast.error('Swap transaction failed');
+      }
     } catch (error) {
       console.error('Error executing swap:', error);
       const errorMessage = 'Failed to execute swap';
@@ -198,7 +211,9 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       setIsLoading(false);
       setSwapButtonState('ready');
     }
-  };  // Use a ref to cache search results
+  };
+  
+  // Use a ref to cache search results
   const searchCache = useCallback(() => {
     const cache = new Map<string, Token[]>();
     
@@ -214,15 +229,10 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       has: (key: string): boolean => cache.has(key.toLowerCase())
     };
   }, [])();
-    // Search for tokens - combining local filtering with API search for better results
+  
+  // Search for tokens - combining local filtering with API search for better results
   const handleFromSearch = useCallback(async (query: string) => {
     setFromSearchQuery(query);
-    
-    // If query is empty, just show all tokens
-    if (!query || query.trim() === '') {
-      setFilteredFromTokens(tokens);
-      return;
-    }
     
     // For longer queries, use the API to get more accurate results
     if (query.length >= 3) {
@@ -236,36 +246,31 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         }
         
         const results = await searchTokens(query);
-        
-        // Combine API results with local filtered results for better matching
-        const localResults = tokens.filter((token) => 
-          token.name.toLowerCase().includes(query.toLowerCase()) || 
-          token.symbol.toLowerCase().includes(query.toLowerCase())
-        );
-        
-        // Create a Map of IDs to avoid duplicates
-        const uniqueResults = new Map();
-        
-        // Add API results first
         if (results && results.length > 0) {
+          // Combine API results with local filtered results for better matching
+          const localResults = tokens.filter((token) => 
+            token.name.toLowerCase().includes(query.toLowerCase()) || 
+            token.symbol.toLowerCase().includes(query.toLowerCase())
+          );
+          
+          // Create a Map of IDs to avoid duplicates
+          const uniqueResults = new Map();
+          
+          // Prioritize API results
           results.forEach(token => uniqueResults.set(token.id, token));
-        }
-        
-        // Add local results that aren't already included
-        localResults.forEach(token => {
-          if (!uniqueResults.has(token.id)) {
-            uniqueResults.set(token.id, token);
-          }
-        });
-        
-        const finalResults = Array.from(uniqueResults.values());
-        
-        // Cache the results if we have any
-        if (finalResults.length > 0) {
+          
+          // Add local results that aren't already included
+          localResults.forEach(token => {
+            if (!uniqueResults.has(token.id)) {
+              uniqueResults.set(token.id, token);
+            }
+          });
+          
+          const finalResults = Array.from(uniqueResults.values());
+          // Cache the results
           searchCache.set(query, finalResults);
+          setFilteredFromTokens(finalResults);
         }
-        
-        setFilteredFromTokens(finalResults);
       } catch (error) {
         console.error("Error searching tokens:", error);
         // Fallback to local filtering in case of API error
@@ -278,23 +283,12 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       } finally {
         setIsFromSearchLoading(false);
       }
-    } else {
-      // For short queries, do local filtering immediately
-      const q = query.toLowerCase();
-      const localResults = tokens.filter((token) => 
-        token.name.toLowerCase().includes(q) || 
-        token.symbol.toLowerCase().includes(q)
-      );
-      setFilteredFromTokens(localResults);
     }
-  }, [searchTokens, tokens, searchCache]);  const handleToSearch = useCallback(async (query: string) => {
+    // For short queries, the useEffect will handle local filtering
+  }, [searchTokens, tokens, searchCache]);
+  
+  const handleToSearch = useCallback(async (query: string) => {
     setToSearchQuery(query);
-    
-    // If query is empty, just show all tokens
-    if (!query || query.trim() === '') {
-      setFilteredToTokens(tokens);
-      return;
-    }
     
     // For longer queries, use the API to get more accurate results
     if (query.length >= 3) {
@@ -308,32 +302,31 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
         }
         
         const results = await searchTokens(query);
-        
-        // Combine API results with local filtered results for better matching
-        const localResults = tokens.filter((token) => 
-          token.name.toLowerCase().includes(query.toLowerCase()) || 
-          token.symbol.toLowerCase().includes(query.toLowerCase())
-        );
-        
-        // Create a Map of IDs to avoid duplicates
-        const uniqueResults = new Map();
-        
-        // Add API results first
         if (results && results.length > 0) {
+          // Combine API results with local filtered results for better matching
+          const localResults = tokens.filter((token) => 
+            token.name.toLowerCase().includes(query.toLowerCase()) || 
+            token.symbol.toLowerCase().includes(query.toLowerCase())
+          );
+          
+          // Create a Map of IDs to avoid duplicates
+          const uniqueResults = new Map();
+          
+          // Prioritize API results
           results.forEach(token => uniqueResults.set(token.id, token));
+          
+          // Add local results that aren't already included
+          localResults.forEach(token => {
+            if (!uniqueResults.has(token.id)) {
+              uniqueResults.set(token.id, token);
+            }
+          });
+          
+          const finalResults = Array.from(uniqueResults.values());
+          // Cache the results
+          searchCache.set(query, finalResults);
+          setFilteredToTokens(finalResults);
         }
-        
-        // Add local results that aren't already included
-        localResults.forEach(token => {
-          if (!uniqueResults.has(token.id)) {
-            uniqueResults.set(token.id, token);
-          }
-        });
-        
-        const finalResults = Array.from(uniqueResults.values());
-        // Cache the results
-        searchCache.set(query, finalResults);
-        setFilteredToTokens(finalResults);
       } catch (error) {
         console.error("Error searching tokens:", error);
         // Fallback to local filtering in case of API error
@@ -346,15 +339,8 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       } finally {
         setIsToSearchLoading(false);
       }
-    } else {
-      // For short queries, do local filtering immediately
-      const q = query.toLowerCase();
-      const localResults = tokens.filter((token) => 
-        token.name.toLowerCase().includes(q) || 
-        token.symbol.toLowerCase().includes(q)
-      );
-      setFilteredToTokens(localResults);
     }
+    // For short queries, the useEffect will handle local filtering
   }, [searchTokens, tokens, searchCache]);
 
   // Effect for loading token prices for selected tokens
@@ -383,29 +369,13 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
   // Extract tokens safely
   const safeFromTokenSymbol = fromToken?.symbol || 'Select';
   const safeToTokenSymbol = toToken?.symbol || 'Select';
-    // Function to safely display token exchange rate
+  
+  // Function to safely display token exchange rate
   const getExchangeRateDisplay = () => {
     if (fromToken && toToken && fromAmount && toAmount && parseFloat(fromAmount) > 0) {
       try {
-        // Simply calculate the exchange rate by dividing the target amount by the source amount
-        // This should reflect the rate from the simulateSwap function in ethereum.ts
-        // For example: If 0.5 ETH gives us 1500 USDC, then 1 ETH = 3000 USDC
-        const rate = parseFloat(toAmount) / parseFloat(fromAmount);
-        
-        // Format based on the size of the rate (avoid too many decimals for large rates)
-        let formattedRate: string;
-        if (rate >= 1000) {
-          // For large rates like ETH/USDC (around 3000), show fewer decimals
-          formattedRate = rate.toLocaleString(undefined, { maximumFractionDigits: 2 });
-        } else if (rate >= 1) {
-          // For medium rates, show more precision
-          formattedRate = rate.toLocaleString(undefined, { maximumFractionDigits: 4 });
-        } else {
-          // For small rates (like USDC/ETH which is around 0.00033), show more decimals
-          formattedRate = rate.toLocaleString(undefined, { maximumFractionDigits: 6 });
-        }
-        
-        return `1 ${safeFromTokenSymbol} ≈ ${formattedRate} ${safeToTokenSymbol}`;
+        const rate = (parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6);
+        return `1 ${safeFromTokenSymbol} ≈ ${rate} ${safeToTokenSymbol}`;
       } catch (error) {
         console.error('Error calculating exchange rate:', error);
         return `1 ${safeFromTokenSymbol} ≈ ? ${safeToTokenSymbol}`;
@@ -582,7 +552,7 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
 
       {/* Swap Button */}
       <button
-        onClick={executeSwap}
+        onClick={handleSwap}
         disabled={swapButtonState === 'disabled' || isLoading}
         className={`w-full py-3 px-4 rounded-lg font-medium shadow-lg ${
           swapButtonState === 'disabled' || isLoading
@@ -592,14 +562,16 @@ export default function SwapInterface({ wallet, onSwapComplete }: SwapInterfaceP
       >
         {isLoading ? (
           <span className="flex items-center justify-center">
-            <RefreshCw size={18} className="animate-spin mr-2" /> Processing...
+            <RefreshCw size={18} className="animate-spin mr-2" /> {t('swap.processing')}
           </span>
         ) : swapButtonState === 'disabled' ? (
-          'Enter an amount'
+          t('swap.enter_amount')
         ) : (
-          'Swap Tokens'
+          t('swap.swap_tokens')
         )}
-      </button>      {/* Token Selection Dialog for "From" */}
+      </button>      
+      
+      {/* Token Selection Dialog for "From" */}
       <Dialog open={isFromTokenSelectOpen} onOpenChange={setIsFromTokenSelectOpen}>
         <DialogContent className="border-blue-500/30">
           <DialogHeader>

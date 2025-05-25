@@ -12,21 +12,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     await initializePrisma();
     
     // Authentication optional - public endpoint
-    await authenticateRequest(req);    // Parse query parameter
+    await authenticateRequest(req);
+    
+    // Parse query parameter
     const url = new URL(req.url);
     const query = url.searchParams.get('q') || '';
     
-    // If no query is provided, return all tokens (with limit)
-    if (!query) {
-      const allTokens = await prisma.token.findMany({
-        where: { isActive: true },
-        take: 20, // Limit number of tokens returned
-        orderBy: { symbol: 'asc' }
-      });
-      return NextResponse.json({ tokens: allTokens });
-    }
-    
-    // Only filter if query is at least 2 characters
+    // Return empty if query is too short
     if (query.length < 2) {
       return NextResponse.json({ tokens: [] });
     }

@@ -1,0 +1,268 @@
+// translations.ts - Contains translations for the app
+interface Translations {
+  [key: string]: {
+    [key: string]: string;
+  };
+}
+
+export const translations: Translations = {
+  en: {
+    // Wallet
+    "wallet.connect": "Connect Wallet",
+    "wallet.disconnect": "Disconnect Wallet",
+    "wallet.connecting": "Connecting to wallet...",
+    "wallet.connected": "Connected to wallet",
+    "wallet.address": "Wallet Address",
+    "wallet.balance": "Balance",
+    "wallet.network": "Network",
+    "wallet.switch_network": "Switch Network",
+    "wallet.wrong_network": "Wrong network. Please switch to {network}",
+    "wallet.add_wallet": "Add Wallet",
+    "wallet.remove_wallet": "Remove Wallet",
+    "wallet.select_wallet": "Select Wallet",
+    "wallet.wallet_name": "Wallet Name",
+    "wallet.eth": "Ethereum",
+    "wallet.bsc": "Binance Smart Chain",
+    "wallet.polygon": "Polygon",
+    "wallet.arbitrum": "Arbitrum",
+    "wallet.default": "Default",
+    "wallet.set_default": "Set as Default",
+    "wallet.no_wallets": "No wallets added yet",
+    "wallet.add_first": "Add your first wallet",
+    "wallet.installed": "Check if you have {wallet} installed",    // Web3
+    "web3.connect_prompt": "Connect your wallet to continue",
+    "web3.provider_error": "No Ethereum provider found",
+    "web3.connect_error": "Failed to connect to wallet",
+    "web3.network_error": "Network error",
+    "web3.transaction_error": "Transaction error",
+    "web3.wallet_connect": "Connect with WalletConnect",
+    "web3.metamask": "Connect with MetaMask",
+    "web3.coinbase": "Connect with Coinbase Wallet",
+    "web3.transaction_pending": "Transaction pending...",
+    "web3.transaction_success": "Transaction successful",
+    "web3.transaction_failed": "Transaction failed",    "web3.view_transaction": "View transaction details",
+    "web3.signature_required": "Signature required",
+    "web3.signature_rejected": "Signature rejected",
+    "web3.sign_message": "Sign message",
+    "web3.confirm_transaction": "Confirm Transaction",
+    "web3.transaction_details": "Transaction Details",
+    "web3.insufficient_balance": "Insufficient balance",
+    "web3.network_fee": "Network fee",
+    "web3.total_cost": "Total cost",
+    "web3.gas_price": "Gas price",
+    "web3.gas_limit": "Gas limit",
+    "web3.estimated_gas": "Estimated Gas",
+    "web3.gas_fee": "Gas Fee",
+    "web3.network": "Network",
+    "web3.show_details": "Show Details",
+    "web3.hide_details": "Hide Details",
+    "web3.awaiting_confirmation": "Awaiting Confirmation",
+    "web3.check_wallet": "Check your wallet to confirm the transaction",
+    "web3.token_approval_required": "Token Approval Required",
+    "web3.approve_tokens": "Approve {symbol} tokens",
+    "web3.approval_pending": "Approval Pending",
+    "web3.wrong_chain": "Wrong Chain",
+    "web3.switch_to_chain": "Please switch to {chain}",
+    "web3.switching_chain": "Switching to {chain}...",
+    "web3.unsupported_network": "Unsupported network detected",
+
+    // Swap
+    "swap.title": "Swap Tokens",
+    "swap.from": "From",
+    "swap.to": "To",
+    "swap.swap_tokens": "Swap Tokens",
+    "swap.select_token": "Select a token",
+    "swap.enter_amount": "Enter an amount",
+    "swap.processing": "Processing...",
+    "swap.searching": "Searching tokens...",
+    "swap.no_tokens_found": "No tokens found. Try a different search.",
+    "swap.rate": "1 {from} ≈ {rate} {to}",
+    "swap.insufficient": "Insufficient balance",
+    "swap.success": "Swap executed successfully!",
+    "swap.error": "Failed to execute swap",
+    "swap.slippage": "Slippage Tolerance",
+    "swap.settings": "Swap Settings",
+    "swap.save_settings": "Save Settings",
+    "swap.select_wallet": "Please select or add a wallet to perform swaps",
+    "swap.balance": "Balance",
+    "swap.loading": "Loading...",
+    "swap.select": "Select",
+    "swap.transaction_settings": "Transaction Settings",
+    "swap.slippage_tolerance": "Slippage Tolerance",
+    "swap.custom_slippage": "Custom Slippage",
+    "swap.slippage_info": "Higher slippage increases your chances of a successful transaction but may result in less favorable rates.",
+    "swap.wallet_source": "Wallet Source",
+    "swap.centralized": "Centralized",
+    "swap.web3_wallet": "Web3 Wallet",
+    "swap.unknown": "Unknown",
+    "swap.unknown_token": "Unknown Token",
+    "swap.search_tokens": "Search tokens...",
+    "swap.price_impact": "Price Impact",
+    "swap.min_received": "Minimum Received",    
+    "swap.wrong_network": "Please switch to a supported network",
+    "swap.fill_all_fields": "Please fill all fields",
+    "swap.use_main_networks": "Use main network for swap",
+    "swap.high_price_impact_warning": "This swap has a high price impact, which means you are losing a significant amount of value",
+    "swap.review_swap": "Review Swap",
+    "swap.fetching_prices": "Fetching token prices",
+    "swap.token_not_available": "This token is not available for swapping",
+    "swap.loading_rate": "Loading exchange rate...",
+
+    // Network
+    "network.ethereum": "Ethereum",
+    "network.bsc": "BSC",    
+    "network.polygon": "Polygon",
+    "network.arbitrum": "Arbitrum",
+    "network.optimism": "Optimism",
+    "network.avalanche": "Avalanche",
+    
+    // Common
+    "common.confirm": "Confirm",
+    "common.cancel": "Cancel",
+    "common.confirming": "Confirming...",
+    "common.confirm_anyway": "Confirm Anyway",
+    "common.high_impact": "High Impact",
+  },
+  vi: {
+    // Wallet
+    "wallet.connect": "Kết nối ví",
+    "wallet.disconnect": "Ngắt kết nối ví",
+    "wallet.connecting": "Đang kết nối ví...",
+    "wallet.connected": "Đã kết nối ví",
+    "wallet.address": "Địa chỉ ví",
+    "wallet.balance": "Số dư",
+    "wallet.network": "Mạng",
+    "wallet.switch_network": "Chuyển mạng",
+    "wallet.wrong_network": "Sai mạng. Vui lòng chuyển sang {network}",
+    "wallet.add_wallet": "Thêm ví",
+    "wallet.remove_wallet": "Xóa ví",
+    "wallet.select_wallet": "Chọn ví",
+    "wallet.wallet_name": "Tên ví",
+    "wallet.eth": "Ethereum",
+    "wallet.bsc": "Binance Smart Chain",
+    "wallet.polygon": "Polygon",
+    "wallet.arbitrum": "Arbitrum",
+    "wallet.default": "Mặc định",
+    "wallet.set_default": "Đặt làm mặc định",
+    "wallet.no_wallets": "Chưa có ví nào được thêm",
+    "wallet.add_first": "Thêm ví đầu tiên của bạn",
+    "wallet.installed": "Kiểm tra xem bạn đã cài đặt {wallet} chưa",    
+    
+    // Web3
+    "web3.connect_prompt": "Kết nối ví của bạn để tiếp tục",
+    "web3.provider_error": "Không tìm thấy nhà cung cấp Ethereum",
+    "web3.connect_error": "Không thể kết nối với ví",
+    "web3.network_error": "Lỗi mạng",
+    "web3.transaction_error": "Lỗi giao dịch",
+    "web3.wallet_connect": "Kết nối với WalletConnect",
+    "web3.metamask": "Kết nối với MetaMask",
+    "web3.coinbase": "Kết nối với Coinbase Wallet",
+    "web3.transaction_pending": "Giao dịch đang chờ xử lý...",
+    "web3.transaction_success": "Giao dịch thành công",
+    "web3.transaction_failed": "Giao dịch thất bại",    "web3.view_transaction": "Xem chi tiết giao dịch",
+    "web3.signature_required": "Yêu cầu chữ ký",
+    "web3.signature_rejected": "Chữ ký bị từ chối",
+    "web3.sign_message": "Ký tin nhắn",
+    "web3.confirm_transaction": "Xác nhận giao dịch",
+    "web3.transaction_details": "Chi tiết giao dịch",
+    "web3.insufficient_balance": "Số dư không đủ",
+    "web3.network_fee": "Phí mạng",
+    "web3.total_cost": "Tổng chi phí",
+    "web3.gas_price": "Giá gas",
+    "web3.gas_limit": "Giới hạn gas",
+    "web3.estimated_gas": "Gas ước tính",
+    "web3.gas_fee": "Phí Gas",
+    "web3.network": "Mạng",
+    "web3.show_details": "Hiện thị chi tiết",
+    "web3.hide_details": "Ẩn chi tiết",
+    "web3.awaiting_confirmation": "Đang chờ xác nhận",
+    "web3.check_wallet": "Kiểm tra ví của bạn để xác nhận giao dịch",
+    "web3.token_approval_required": "Yêu cầu phê duyệt token",
+    "web3.approve_tokens": "Phê duyệt token {symbol}",
+    "web3.approval_pending": "Đang chờ phê duyệt",
+    "web3.wrong_chain": "Sai chuỗi",
+    "web3.switch_to_chain": "Vui lòng chuyển sang {chain}",
+    "web3.switching_chain": "Đang chuyển sang {chain}...",
+    "web3.unsupported_network": "Phát hiện mạng không được hỗ trợ",
+
+    // Swap
+    "swap.title": "Hoán đổi Token",
+    "swap.from": "Từ",
+    "swap.to": "Đến",
+    "swap.swap_tokens": "Hoán đổi Token",
+    "swap.select_token": "Chọn một token",
+    "swap.enter_amount": "Nhập số lượng",
+    "swap.processing": "Đang xử lý...",
+    "swap.searching": "Đang tìm kiếm token...",
+    "swap.no_tokens_found": "Không tìm thấy token. Thử tìm kiếm khác.",
+    "swap.rate": "1 {from} ≈ {rate} {to}",
+    "swap.insufficient": "Số dư không đủ",
+    "swap.success": "Hoán đổi thành công!",
+    "swap.error": "Không thể thực hiện hoán đổi",
+    "swap.slippage": "Dung sai trượt giá",
+    "swap.settings": "Cài đặt hoán đổi",
+    "swap.save_settings": "Lưu cài đặt",
+    "swap.select_wallet": "Vui lòng chọn hoặc thêm ví để thực hiện hoán đổi",
+    "swap.balance": "Số dư",
+    "swap.loading": "Đang tải...",
+    "swap.select": "Chọn",
+    "swap.transaction_settings": "Cài đặt giao dịch",
+    "swap.slippage_tolerance": "Dung sai trượt giá",
+    "swap.custom_slippage": "Dung sai tùy chỉnh",
+    "swap.slippage_info": "Dung sai cao hơn sẽ tăng cơ hội giao dịch thành công nhưng có thể dẫn đến tỷ giá kém thuận lợi hơn.",
+    "swap.wallet_source": "Nguồn ví",
+    "swap.centralized": "Tập trung",
+    "swap.web3_wallet": "Ví Web3",
+    "swap.unknown": "Không xác định",
+    "swap.unknown_token": "Token không xác định",
+    "swap.search_tokens": "Tìm kiếm token...",
+    "swap.price_impact": "Tác động giá",
+    "swap.min_received": "Nhận tối thiểu",    
+    "swap.wrong_network": "Vui lòng chuyển sang mạng được hỗ trợ",
+    "swap.fill_all_fields": "Vui lòng điền đầy đủ thông tin",
+    "swap.use_main_networks": "Sử dụng mạng chính cho giao dịch",
+    "swap.high_price_impact_warning": "Giao dịch này có tác động giá lớn, nghĩa là bạn đang mất một lượng giá trị đáng kể",
+    "swap.review_swap": "Xem xét hoán đổi",
+    "swap.fetching_prices": "Đang lấy giá token",
+    "swap.token_not_available": "Token này không có sẵn để hoán đổi",
+    "swap.loading_rate": "Đang tải tỷ giá hoán đổi...",
+
+    // Network
+    "network.ethereum": "Ethereum",
+    "network.bsc": "BSC",    
+    "network.polygon": "Polygon",
+    "network.arbitrum": "Arbitrum",
+    "network.optimism": "Optimism",
+    "network.avalanche": "Avalanche",
+    
+    // Common
+    "common.confirm": "Xác nhận",
+    "common.cancel": "Hủy",
+    "common.confirming": "Đang xác nhận...",
+    "common.confirm_anyway": "Vẫn xác nhận",
+    "common.high_impact": "Tác động cao",
+  }
+};
+
+/**
+ * Get translation for a key
+ * @param key - The translation key
+ * @param language - The language code (defaults to 'en')
+ * @param params - Parameters to replace in the translation
+ * @returns The translated string
+ */
+export const t = (key: string, language = 'en', params?: Record<string, string | number>): string => {
+  // Default to English if the language is not supported or if the key is not found
+  const translation = translations[language]?.[key] || translations.en?.[key] || key;
+  
+  // Replace parameters if provided
+  if (params) {
+    return Object.entries(params).reduce((result, [param, value]) => {
+      return result.replace(new RegExp(`{${param}}`, 'g'), String(value));
+    }, translation);
+  }
+  
+  return translation;
+};
+
+export default translations;
